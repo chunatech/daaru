@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="canopy" Version="2.1.5" />
-    <PackageReference Include="FSharp.Compiler.Service" Version="43.7.200" />
+    <PackageReference Include="FSharp.Compiler.Service" Version="41.0.7" />
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="110.0.5481.7700" />
   </ItemGroup>
 

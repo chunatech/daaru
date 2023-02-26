@@ -54,113 +54,116 @@ open System.Collections.ObjectModel
 
 
 // Evauluator of the constructed/loaded .fsx files with a non-interactive FSI session
-// module Evaluator =
-//     open System.Globalization
-//     open System.Text
-//     open Microsoft.FSharp.Compiler.Interactive.Shell
+module Evaluator =
+    open System.Globalization
+    open System.Text
+    open FSharp.Compiler.Interactive.Shell
 
-//     // Init string builders to be used for output and error streams
-//     let sbOut = StringBuilder()
-//     let sbErr = StringBuilder()
+    // Init string builders to be used for output and error streams
+    let sbOut: StringBuilder = StringBuilder()
+    let sbErr: StringBuilder = StringBuilder()
 
-//     let fsi =
-//         let inStream = new StringReader("")
-//         let outStream = new StringWriter(sbOut)
-//         let errStream = new StringWriter(sbErr)
+    let fsi: FsiEvaluationSession =
+        let inStream: StringReader = new StringReader("")
+        let outStream: StringWriter = new StringWriter(sbOut)
+        let errStream: StringWriter = new StringWriter(sbErr)
 
-//         try
-//             // Create FSI evaluation session
-//             // First arg in argv below may not be evaluated,
-//             // however subsequent args will be.
-//             // https://github.com/fsharp/fsharp-compiler-docs/issues/877
-//             let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration()
-//             let argv = [| "fsi.exe"; "--noninteractive" |]
-//             FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
-//         with
-//         | ex ->
-//             printfn "Error: %A" ex
-//             printfn "Inner: %A" ex.InnerException
-//             printfn "ErrorStream: %s" (errStream.ToString())
-//             raise ex
-
-
-//     let getOpen path =
-//         let path = Path.GetFullPath path
-//         let filename = Path.GetFileNameWithoutExtension path
-//         let textInfo = (CultureInfo("en-US", false)).TextInfo
-//         textInfo.ToTitleCase filename
+        try
+            // Create FSI evaluation session
+            // First arg in argv below may not be evaluated,
+            // however subsequent args will be.
+            // https://github.com/fsharp/fsharp-compiler-docs/issues/877
+                let fsiConfig: FsiEvaluationSessionHostConfig = FsiEvaluationSession.GetDefaultConfiguration()
+                let argv: string[] = [| "fsi.exe"; "--noninteractive" |]
+                FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
+        with
+        | (ex: exn) ->
+            printfn "Error: %A" ex
+            printfn "Inner: %A" ex.InnerException
+            printfn "ErrorStream: %s" (errStream.ToString())
+            raise ex
 
 
-//     let getLoad path =
-//          let path = Path.GetFullPath path
-//          path.Replace("\\", "\\\\")
+    let getOpen (path: string) =
+        let path: string = Path.GetFullPath path
+        let filename: string = Path.GetFileNameWithoutExtension path
+        let textInfo: TextInfo = (CultureInfo("en-US", false)).TextInfo
+        textInfo.ToTitleCase filename
 
 
-//     let evaluate path =
-//         let filename = getOpen path
-//         let load = getLoad path
+    let getLoad (path: string) =
+         let path: string = Path.GetFullPath path
+         path.Replace("\\", "\\\\")
 
-//         let _, errs = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
-//         if errs.Length > 0 then printfn "Load Errors : %A" errs
 
-//         let _, errs = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
-//         if errs.Length > 0 then printfn "Open Errors : %A" errs
+    let evaluate (path: string) =
+        let filename: string = getOpen path
+        let load: string = getLoad path
 
-//         let res,errs = fsi.EvalExpressionNonThrowing "map"
-//         if errs.Length > 0 then printfn "Get map Errors : %A" errs
+        let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
+        if errs.Length > 0 then printfn "Load Errors : %A" errs
 
-//         match res with
-//         | Choice1Of2 (Some f) ->
-//             f.ReflectionValue :?> Transformation |> Some
-//         | _ -> None
+        let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
+        if errs.Length > 0 then printfn "Open Errors : %A" errs
+
+        let (res: Choice<FsiValue option,exn>),(errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalExpressionNonThrowing "map"
+        if errs.Length > 0 then printfn "Get map Errors : %A" errs
+
+        // match res with
+        // | Choice1Of2 (Some (f: FsiValue)) ->
+        //     f.ReflectionValue :?> Transformation |> Some
+        // | _ -> None
+        ()
 
 
 // Filtered watcher of filesystem, to look for any new .cwt or .fsx files, then take action on them.
 module Watcher =
-    let create filter addCb rmCb updateCb dir =
+    let create (filter: string) addCb rmCb updateCb (dir: string) =
         if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore
-        let watcher = new FileSystemWatcher()
+        let watcher: FileSystemWatcher = new FileSystemWatcher()
         watcher.Filter <- filter
         watcher.Path <- dir
-        watcher.Created.Add (fun n -> n.FullPath |> addCb)
-        watcher.Deleted.Add (fun n -> n.FullPath |> rmCb)
-        watcher.Renamed.Add (fun n -> n.OldFullPath |> rmCb; n.FullPath |> addCb)
-        watcher.Changed.Add (fun n -> n.FullPath |> updateCb)
+        watcher.Created.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> addCb)
+        watcher.Deleted.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> rmCb)
+        watcher.Renamed.Add (fun (n: RenamedEventArgs) -> n.OldFullPath |> rmCb; n.FullPath |> addCb)
+        watcher.Changed.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> updateCb)
         watcher.SynchronizingObject <- null
         watcher.EnableRaisingEvents <- true
 
         watcher
     
-    let rec createForDirs addCb rmCb updateCb dirList watcherList =
+    let rec createForDirs addCb rmCb updateCb (dirList: string list) (watcherList: FileSystemWatcher list) =
         match dirList with
         | [] -> watcherList
-        | dir :: dirs -> 
-            let watcherList = [create "*.cwt" addCb rmCb updateCb dir] @ watcherList
-            let watcherList = [create "*.fsx" addCb rmCb updateCb dir] @ watcherList
+        | (dir: string) :: (dirs: string list) -> 
+            let watcherList: FileSystemWatcher list = [create "*.cwt" addCb rmCb updateCb dir] @ watcherList
+            let watcherList: FileSystemWatcher list = [create "*.fsx" addCb rmCb updateCb dir] @ watcherList
             createForDirs addCb rmCb updateCb dirs watcherList
 
 
 
 [<EntryPoint>]
-let main argv =
+let main (argv: string[]) =
+    // Special fspace for TunaKr0n:
 
-    let remove path =
+
+    let remove (path: string) =
         printfn "%s removed" path
         // let fn = Path.GetFileNameWithoutExtension path
         // Register.remove fn
 
-    let add path =
+    let add (path: string) =
         printfn "%s added" path
+        Evaluator.evaluate path
         // let fn = Path.GetFileNameWithoutExtension path
         // match Evaluator.evaluate path |> Option.map (fun ev -> Register.add fn ev ) with
         // | Some _ -> ()
         // | None -> printfn "File `%s` couldn't be parsed" path
 
-    let update path =
+    let update (path: string) =
         printfn "%s added or updated" path
 
-    let watcherList = Watcher.createForDirs add remove update ["scripts"] []
-    printfn "%A" watcherList
+    let watcherList: FileSystemWatcher list = Watcher.createForDirs add remove update ["scripts"] []
 
     // while true do
     //     let input = System.Console.ReadLine ()
@@ -168,11 +171,11 @@ let main argv =
     //     let res = lst |> List.fold (fun s e -> e s ) input
     //     printfn "Result: %s" res
 
-    let curDirInfo = DirectoryInfo(".")
+    let curDirInfo: DirectoryInfo = DirectoryInfo(".")
     printfn "%s" curDirInfo.FullName
 
     while true do
-        let unused = System.Console.ReadLine ()
+        let unused: string = System.Console.ReadLine ()
         printfn "%s" unused
 
     0 // return an integer exit code

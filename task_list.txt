@@ -8,10 +8,11 @@
 [x] detect filesystem changes
 [] update list of files as changes occur
 [] start fsi evaulation session
-[] run fsx file written to disk
+[x] run fsx file written to disk
+[] run fsx file on polling cycle
 [] remove fsx(text) file from disk
 [x] point to specific chromedriver
-[] point to specific chrome exe
+[] point to specific browser
 [] output results to stdout as json
 [] write operations to log
 
