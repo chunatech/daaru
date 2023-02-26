@@ -12,3 +12,19 @@
 [] output results to stdout as json
 [] write operations to log
 [] support for headless browser mode
+
+
+main loop description:
+    begin:
+        load config file
+            determine taraget dir containing .cwt and .fsx scripts to be run
+            determine default polling cycle (in minutes)
+            determine depth of directory structure to search (default 2)
+            ...
+        get list of .cwt and .fsx files to run
+            git list of .cwt and .fsx files from target dir defined in config file
+            create watcher for target dir
+            if directories in target dir, check through each of them for .cwt and/or .fsx files until max depth
+            create watcher for each dir found that contains .cwt and/or .fsx files
+    loop:
+        
