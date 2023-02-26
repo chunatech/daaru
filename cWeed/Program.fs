@@ -117,7 +117,7 @@ open System.Collections.ObjectModel
 
 // Filtered watcher of filesystem, to look for any new .cwt or .fsx files, then take action on them.
 module Watcher =
-    let create filter addCb rmCb dir =
+    let create filter addCb rmCb updateCb dir =
         if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore
         let watcher = new FileSystemWatcher()
         watcher.Filter <- filter
@@ -125,29 +125,42 @@ module Watcher =
         watcher.Created.Add (fun n -> n.FullPath |> addCb)
         watcher.Deleted.Add (fun n -> n.FullPath |> rmCb)
         watcher.Renamed.Add (fun n -> n.OldFullPath |> rmCb; n.FullPath |> addCb)
-        watcher.Changed.Add (fun n -> n.FullPath |> rmCb; n.FullPath |> addCb)
+        watcher.Changed.Add (fun n -> n.FullPath |> updateCb)
         watcher.SynchronizingObject <- null
         watcher.EnableRaisingEvents <- true
 
         watcher
+    
+    let rec createForDirs addCb rmCb updateCb dirList watcherList =
+        match dirList with
+        | [] -> watcherList
+        | dir :: dirs -> 
+            let watcherList = [create "*.cwt" addCb rmCb updateCb dir] @ watcherList
+            let watcherList = [create "*.fsx" addCb rmCb updateCb dir] @ watcherList
+            createForDirs addCb rmCb updateCb dirs watcherList
 
 
 
 [<EntryPoint>]
 let main argv =
-    let removeCwt path =
-        printfn "lost %s" path
+
+    let remove path =
+        printfn "%s removed" path
         // let fn = Path.GetFileNameWithoutExtension path
         // Register.remove fn
 
-    let addCwt path =
-        printfn "found %s" path
+    let add path =
+        printfn "%s added" path
         // let fn = Path.GetFileNameWithoutExtension path
         // match Evaluator.evaluate path |> Option.map (fun ev -> Register.add fn ev ) with
         // | Some _ -> ()
         // | None -> printfn "File `%s` couldn't be parsed" path
 
-    let cwtWatcher = Watcher.create "*.cwt" addCwt removeCwt "scripts"
+    let update path =
+        printfn "%s added or updated" path
+
+    let watcherList = Watcher.createForDirs add remove update ["scripts"] []
+    printfn "%A" watcherList
 
     // while true do
     //     let input = System.Console.ReadLine ()
@@ -155,11 +168,11 @@ let main argv =
     //     let res = lst |> List.fold (fun s e -> e s ) input
     //     printfn "Result: %s" res
 
+    let curDirInfo = DirectoryInfo(".")
+    printfn "%s" curDirInfo.FullName
+
     while true do
         let unused = System.Console.ReadLine ()
         printfn "%s" unused
-
-    let curDirInfo = DirectoryInfo(".")
-    printfn "%s" curDirInfo.FullName
 
     0 // return an integer exit code
