@@ -106,7 +106,7 @@ module Evaluator =
         let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
         if errs.Length > 0 then printfn "Open Errors : %A" errs
 
-        let (res: Choice<FsiValue option,exn>),(errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalExpressionNonThrowing "map"
+        let (res: Choice<FsiValue option,exn>),(errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalExpressionNonThrowing "Map"
         if errs.Length > 0 then printfn "Get map Errors : %A" errs
 
         // match res with
@@ -131,26 +131,13 @@ module Watcher =
         watcher.EnableRaisingEvents <- true
 
         watcher
-    
-    let rec createForDirs addCb rmCb updateCb (dirList: string list) (watcherList: FileSystemWatcher list) =
-        match dirList with
-        | [] -> watcherList
-        | (dir: string) :: (dirs: string list) -> 
-            let watcherList: FileSystemWatcher list = [create "*.cwt" addCb rmCb updateCb dir] @ watcherList
-            let watcherList: FileSystemWatcher list = [create "*.fsx" addCb rmCb updateCb dir] @ watcherList
-            createForDirs addCb rmCb updateCb dirs watcherList
-
-
-
-[<EntryPoint>]
-let main (argv: string[]) =
-    // Special fspace for TunaKr0n:
 
 
     let remove (path: string) =
         printfn "%s removed" path
         // let fn = Path.GetFileNameWithoutExtension path
         // Register.remove fn
+
 
     let add (path: string) =
         printfn "%s added" path
@@ -160,10 +147,27 @@ let main (argv: string[]) =
         // | Some _ -> ()
         // | None -> printfn "File `%s` couldn't be parsed" path
 
+
     let update (path: string) =
         printfn "%s added or updated" path
+    
 
-    let watcherList: FileSystemWatcher list = Watcher.createForDirs add remove update ["scripts"] []
+    let rec createForDirs (dirList: string list) (watcherList: FileSystemWatcher list) =
+        match dirList with
+        | [] -> watcherList
+        | (dir: string) :: (dirs: string list) -> 
+            let watcherList: FileSystemWatcher list = [create "*.cwt" add remove update dir] @ watcherList
+            let watcherList: FileSystemWatcher list = [create "*.fsx" add remove update dir] @ watcherList
+            createForDirs dirs watcherList
+
+
+
+[<EntryPoint>]
+let main (argv: string[]) =
+    // Special space for TunaKr0n:
+
+
+    let watcherList: FileSystemWatcher list = Watcher.createForDirs ["scripts"] []
 
     // while true do
     //     let input = System.Console.ReadLine ()
