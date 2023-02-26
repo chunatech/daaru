@@ -8,6 +8,8 @@
 // https://fsharp.github.io/fsharp-compiler-docs/fcs/interactive.html
 
 open System.IO
+open System.Collections.Generic
+open System.Collections.ObjectModel
 
 
 // type defined in original example project
@@ -114,43 +116,48 @@ open System.IO
 
 
 // Filtered watcher of filesystem, to look for any new .cwt or .fsx files, then take action on them.
-// module Watcher =
-//     let create addCb rmCb dir =
-//         if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore
+module Watcher =
+    let create filter addCb rmCb dir =
+        if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore
+        let watcher = new FileSystemWatcher()
+        watcher.Filter <- filter
+        watcher.Path <- dir
+        watcher.Created.Add (fun n -> n.FullPath |> addCb)
+        watcher.Deleted.Add (fun n -> n.FullPath |> rmCb)
+        watcher.Renamed.Add (fun n -> n.OldFullPath |> rmCb; n.FullPath |> addCb)
+        watcher.Changed.Add (fun n -> n.FullPath |> rmCb; n.FullPath |> addCb)
+        watcher.SynchronizingObject <- null
+        watcher.EnableRaisingEvents <- true
 
-//         let watcher = new FileSystemWatcher()
-//         watcher.Filter <- [|"*.cwt"; "*.fsx"|]
-//         watcher.Path <- dir
-//         watcher.Created.Add (fun n -> n.FullPath |> addCb)
-//         watcher.Deleted.Add (fun n -> n.FullPath |> rmCb)
-//         watcher.Renamed.Add (fun n -> n.OldFullPath |> rmCb; n.FullPath |> addCb)
-//         watcher.Changed.Add (fun n -> n.FullPath |> rmCb; n.FullPath |> addCb)
-//         watcher.SynchronizingObject <- null
-//         watcher.EnableRaisingEvents <- true
-
-//         watcher
+        watcher
 
 
 
 [<EntryPoint>]
 let main argv =
-    // let remove path =
-    //     let fn = Path.GetFileNameWithoutExtension path
-    //     Register.remove fn
+    let removeCwt path =
+        printfn "lost %s" path
+        // let fn = Path.GetFileNameWithoutExtension path
+        // Register.remove fn
 
-    // let add path =
-    //     let fn = Path.GetFileNameWithoutExtension path
-    //     match Evaluator.evaluate path |> Option.map (fun ev -> Register.add fn ev ) with
-    //     | Some _ -> ()
-    //     | None -> printfn "File `%s` couldn't be parsed" path
+    let addCwt path =
+        printfn "found %s" path
+        // let fn = Path.GetFileNameWithoutExtension path
+        // match Evaluator.evaluate path |> Option.map (fun ev -> Register.add fn ev ) with
+        // | Some _ -> ()
+        // | None -> printfn "File `%s` couldn't be parsed" path
 
-    // let watcher = Watcher.create add remove "scripts"
+    let cwtWatcher = Watcher.create "*.cwt" addCwt removeCwt "scripts"
 
     // while true do
     //     let input = System.Console.ReadLine ()
     //     let lst = Register.get ()
     //     let res = lst |> List.fold (fun s e -> e s ) input
     //     printfn "Result: %s" res
+
+    while true do
+        let unused = System.Console.ReadLine ()
+        printfn "%s" unused
 
     let curDirInfo = DirectoryInfo(".")
     printfn "%s" curDirInfo.FullName
