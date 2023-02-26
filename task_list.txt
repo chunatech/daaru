@@ -1,17 +1,19 @@
 [x] create a git repo
 [x] create a functional test fsx script
-[] read a text file into memory
+[x] read a text file into memory
 [] read config file to set config variables
 [] write a text file to disk
 [] set permission on text file
+[] populate list of files to process and/or run
+[x] detect filesystem changes
+[] update list of files as changes occur
 [] start fsi evaulation session
 [] run fsx file written to disk
 [] remove fsx(text) file from disk
 [x] point to specific chromedriver
-[] point to to specific chrome exe
+[] point to specific chrome exe
 [] output results to stdout as json
 [] write operations to log
-[] support for headless browser mode
 
 
 main loop description:
@@ -20,6 +22,9 @@ main loop description:
             determine taraget dir containing .cwt and .fsx scripts to be run
             determine default polling cycle (in minutes)
             determine depth of directory structure to search (default 2)
+            determine target browser
+            determine default browser options
+            determine additional packages and imports
             ...
         get list of .cwt and .fsx files to run
             git list of .cwt and .fsx files from target dir defined in config file

@@ -11,6 +11,7 @@ canopy.configuration.chromeDir <- "./bin/Debug/net6.0/"
 let chromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()
 chromeOptions.AddArgument("--no-sandbox")
 chromeOptions.AddArgument("--incognito")
+chromeOptions.AddArgument("--headless")
 let chromeWO =  canopy.types.BrowserStartMode.ChromeWithOptions(chromeOptions)
 start chromeWO
 
