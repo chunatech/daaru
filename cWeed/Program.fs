@@ -3,7 +3,7 @@
 // https://lefthandedgoat.github.io/canopy/index.html
 // https://www.selenium.dev/about/
 
-// Project was initially adapted from an example projects in these articles:
+// Project was initially adapted from example projects in these articles:
 // http://kcieslak.io/Dynamically-extending-F-applications
 // https://fsharp.github.io/fsharp-compiler-docs/fcs/interactive.html
 
@@ -12,45 +12,42 @@ open System.Collections.Generic
 open System.Collections.ObjectModel
 
 
-// type defined in original example project
-// type Transformation = string -> string
 
+module Register =
+    type private Msg =
+        | Add of path: string
+        | Remove of string
+        | Get of AsyncReplyChannel<string list>
 
-// module Register =
-//     type private Msg =
-//         | Add of string * Transformation
-//         | Remove of string
-//         | Get of AsyncReplyChannel<Transformation list>
+    let private register: MailboxProcessor<Msg> =
+        MailboxProcessor.Start (fun (inbox: MailboxProcessor<Msg>) ->
+            // Define processing loop
+            let rec loop (lst: string list) = async {
 
-//     let private register =
-//         MailboxProcessor.Start (fun inbox ->
-//             // Define processing loop
-//             let rec loop lst = async {
+                // Receive message
+                let! (msg: Msg) = inbox.Receive()
 
-//                 // Receive message
-//                 let! msg = inbox.Receive()
+                // Process message and kick off next iteration
+                match msg with
+                | Add (n: string) ->
+                    return! loop (n::lst)
+                | Remove (n: string) ->
+                    return! loop (lst |> List.filter(fun (f: string) -> f <> n))
+                | Get (rc: AsyncReplyChannel<string list>) ->
+                    rc.Reply lst
+                    return! loop lst
+            }
+            loop [] )
 
-//                 // Process message and kick off next iteration
-//                 match msg with
-//                 | Add (n,f) ->
-//                     return! loop ((n,f)::lst)
-//                 | Remove n ->
-//                     return! loop (lst |> List.filter(fun (f,_) -> f <> n))
-//                 | Get rc ->
-//                     let l = lst |> List.map snd
-//                     rc.Reply l
-//                     return! loop lst
-//             }
-//             loop [] )
+    let add (name: string) =
+        name |> Add |> register.Post
 
-//     let add name fnc =
-//         (name, fnc) |> Add |> register.Post
+    let remove (name: string) =
+        name |> Remove |> register.Post
 
-//     let remove name =
-//         name |> Remove |> register.Post
+    let get () =
+        register.PostAndReply Get
 
-//     let get () =
-//         register.PostAndReply Get
 
 
 // Evauluator of the constructed/loaded .fsx files with a non-interactive FSI session
@@ -106,7 +103,7 @@ module Evaluator =
         let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
         if errs.Length > 0 then printfn "Open Errors : %A" errs
 
-        let (res: Choice<FsiValue option,exn>),(errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalExpressionNonThrowing "Map"
+        let (res: Choice<FsiValue option,exn>),(errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalExpressionNonThrowing(sprintf "map;;")
         if errs.Length > 0 then printfn "Get map Errors : %A" errs
 
         // match res with
@@ -114,6 +111,7 @@ module Evaluator =
         //     f.ReflectionValue :?> Transformation |> Some
         // | _ -> None
         ()
+
 
 
 // Filtered watcher of filesystem, to look for any new .cwt or .fsx files, then take action on them.
@@ -126,7 +124,7 @@ module Watcher =
         watcher.Created.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> addCb)
         watcher.Deleted.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> rmCb)
         watcher.Renamed.Add (fun (n: RenamedEventArgs) -> n.OldFullPath |> rmCb; n.FullPath |> addCb)
-        watcher.Changed.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> updateCb)
+        // watcher.Changed.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> updateCb)
         watcher.SynchronizingObject <- null
         watcher.EnableRaisingEvents <- true
 
@@ -141,11 +139,8 @@ module Watcher =
 
     let add (path: string) =
         printfn "%s added" path
-        Evaluator.evaluate path
-        // let fn = Path.GetFileNameWithoutExtension path
-        // match Evaluator.evaluate path |> Option.map (fun ev -> Register.add fn ev ) with
-        // | Some _ -> ()
-        // | None -> printfn "File `%s` couldn't be parsed" path
+        // Evaluator.evaluate path
+        Register.add path
 
 
     let update (path: string) =
@@ -169,17 +164,14 @@ let main (argv: string[]) =
 
     let watcherList: FileSystemWatcher list = Watcher.createForDirs ["scripts"] []
 
-    // while true do
-    //     let input = System.Console.ReadLine ()
-    //     let lst = Register.get ()
-    //     let res = lst |> List.fold (fun s e -> e s ) input
-    //     printfn "Result: %s" res
-
     let curDirInfo: DirectoryInfo = DirectoryInfo(".")
     printfn "%s" curDirInfo.FullName
 
     while true do
-        let unused: string = System.Console.ReadLine ()
-        printfn "%s" unused
+        let input = System.Console.ReadLine ()
+        let lst = Register.get ()
+
+        let res: string list = lst |> List.filter (fun (x: string) -> x.EndsWith input)
+        printfn "Result: %A" res
 
     0 // return an integer exit code

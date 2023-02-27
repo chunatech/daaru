@@ -7,20 +7,20 @@ open canopy.classic
 
 canopy.configuration.chromeDir <- "./bin/Debug/net6.0/"
 
-//start an instance of chrome
-let chromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()
-chromeOptions.AddArgument("--no-sandbox")
-chromeOptions.AddArgument("--incognito")
-chromeOptions.AddArgument("--headless")
-let chromeWO =  canopy.types.BrowserStartMode.ChromeWithOptions(chromeOptions)
-start chromeWO
+//start an instance of selected browser
+let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()
+browserOptions.AddArgument("--no-sandbox")
+browserOptions.AddArgument("--incognito")
+browserOptions.AddArgument("--headless")
+let browserWO: canopy.types.BrowserStartMode =  canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions)
+start browserWO
 
 //this is how you define a test
 "taking canopy for a spin" &&& fun _ ->
     //this is an F# function body, it's whitespace enforced
 
     //go to url
-    url "http://lefthandedgoat.github.io/canopy/testpages/"
+    url "https://amazon.com"
 
     //assert that the element with an id of 'welcome' has
     //the text 'Welcome'
@@ -44,4 +44,4 @@ run()
 
 printfn "tests completed!"
 
-quit()
+quit(browserWO)
