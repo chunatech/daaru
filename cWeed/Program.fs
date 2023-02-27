@@ -26,8 +26,8 @@ let main (argv: string[]) =
     printfn "%s" curDirInfo.FullName
 
     while true do
-        let input = System.Console.ReadLine ()
-        let lst = Register.get ()
+        let input: string = System.Console.ReadLine ()
+        let lst: string list = Register.get ()
 
         let res: string list = lst |> List.filter (fun (x: string) -> x.EndsWith input)
         printfn "Result: %A" res

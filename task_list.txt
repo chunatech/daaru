@@ -7,7 +7,7 @@
 [] populate list of files to process and/or run
 [x] detect filesystem changes
 [] update list of files as changes occur
-[] start fsi evaulation session
+[x] start fsi evaulation session
 [x] run fsx file written to disk
 [] run fsx file on polling cycle
 [] remove fsx(text) file from disk
