@@ -17,14 +17,46 @@ open Evaluator
 
 [<EntryPoint>]
 let main (argv: string[]) =
-    // Special space for TunaKr0n:
+    // Find base/default config file
+    // Read config from config file into record
 
 
+    // Recursively search each script directory defined in config
+    // For each directory and subdirectory:
+
+
+    // -- Build .cwt and .fsx watchers for that directory
+    // -- Add watchers to list for tracking and cleanup later
     let watcherList: FileSystemWatcher list = Watcher.createForDirs ["scripts"] []
+
+
+    // -- Find any local config file for that directory
+
+
+    // -- Find any .cwt or .fsx files in that directory
+    // -- For each file found:
+
+
+    // -- -- Read head of file to check for config override
+
+
+    // -- -- Build running config record for file, layer configs like so:
+    // -- -- base/default config <- local dir config <- override from file
+
+
+    // -- -- Build record for file, containing running config, path,
+    // -- -- and timestamps for last run, last failure, and last success
+
+
+    // -- -- Add record for file to Register
+
 
     let curDirInfo: DirectoryInfo = DirectoryInfo(".")
     printfn "%s" curDirInfo.FullName
 
+
+    // Iterate over each file record in Register once a minute.
+    // For any without a thread running, start thread on polling cycle
     while true do
         let input: string = System.Console.ReadLine ()
         let lst: string list = Register.get ()
