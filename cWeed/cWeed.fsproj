@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Configurator.fs" />
     <Compile Include="Register.fs" />
     <Compile Include="Watcher.fs" />
     <Compile Include="Evaluator.fs" />
@@ -13,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Data" Version="5.0.2" />
     <PackageReference Include="canopy" Version="2.1.5" />
     <PackageReference Include="FSharp.Compiler.Service" Version="41.0.7" />
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="110.0.5481.7700" />

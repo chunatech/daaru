@@ -10,6 +10,7 @@
 open System.IO
 
 // Open modules internal to the project
+open Configurator
 open Register
 open Watcher
 open Evaluator
@@ -17,40 +18,6 @@ open Evaluator
 
 [<EntryPoint>]
 let main (argv: string[]) =
-    // Find base/default config file
-    // Read config from config file into record
-    (*
-        Base/Default Config
-        {
-            scriptDirectories: [ dirpath, dirpath, ... ]  // recursive
-            pollingInterval: integer // in minutes
-            browser: Chrome|Chromium|Firefox|Edge|IE|Safari
-            browserOptions: [ browseroption, browseroption, ... ]
-            browserDriverDir: dirpath
-            nugetPackages: [ packagename+ver, packagename+ver, ... ]
-        }
-
-        Directory Config
-        {
-            pollingInterval: integer // in minutes
-            browser: Chrome|Chromium|Firefox|Edge|IE|Safari
-            browserOptions: [ browseroption, browseroption, ... ]
-            browserDriverDir: dirpath
-            nugetPackages: [ packagename+ver, packagename+ver, ... ]
-        }
-
-        Script Config
-        {
-            scriptPath: path
-            pollingInterval: integer // in minutes
-            browser: Chrome|Chromium|Firefox|Edge|IE|Safari
-            browserOptions: [ browseroption, browseroption, ... ]
-            browserDriverDir: dirpath
-            nugetPackages: [ packagename+ver, packagename+ver, ... ]
-        }
-    *)
-
-
     // Recursively search each script directory defined in config
     // For each directory and subdirectory:
 
