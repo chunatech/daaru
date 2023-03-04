@@ -7,6 +7,7 @@ open Thoth.Json.Net
 /// which directories to watch, packages to use, browser to use, options to set and is the default 
 /// setup for everything within watched directories unless otherwise specified with a directory 
 /// specific configuration setup 
+/// TODO: Chase and Tina discuss adding 'localPacakges' member/field.
 type BaseConfiguration = {
     scriptDirectories: string array 
     pollingInterval: int 
@@ -16,6 +17,28 @@ type BaseConfiguration = {
     nugetPackages: string array
 }
 
+type DirectoryConfiguration = {
+    directory: string
+    pollingInterval: int 
+    browser: string 
+    browserOptions: string array 
+    browserDriverDir: string
+    nugetPackages: string array
+}
+
+type TransactionConfiguration = {
+    scriptPath: string
+    pollingInterval: int
+    browser: string
+    browserOptions: string array
+    browserDriverDir: string
+    nugetPackages: string array
+}
+
+type Configuration =
+    | BaseConfig of BaseConfiguration
+    | DirectoryConfig of DirectoryConfiguration
+    | TransactionConfig of TransactionConfiguration
 
 module BaseConfiguration = 
     /// default configuration location information. Still subject to location/naming change at this time

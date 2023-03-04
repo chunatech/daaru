@@ -1,7 +1,7 @@
 [x] create a git repo
 [x] create a functional test fsx script
 [x] read a text file into memory
-[] read config file to set config variables
+[x] read config file to set config variables
 [] write a text file to disk
 [] set permission on text file
 [] populate list of files to process and/or run

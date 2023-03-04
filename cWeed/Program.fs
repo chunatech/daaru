@@ -8,14 +8,11 @@
 // https://fsharp.github.io/fsharp-compiler-docs/fcs/interactive.html
 
 open System.IO
-open Thoth.Json.Net
 open System.Diagnostics
 open System.Threading.Tasks
 
 // Open modules internal to the project
 open Configuration
-//open Register
-//open Watcher
 let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/fsiStandalone"
 // letBaseConfigLocation: string ""
 
@@ -28,7 +25,7 @@ let main (argv: string[]) =
     // Recursively search each script directory defined in config
     // For each directory and subdirectory:
 
-    let config = BaseConfiguration.readFromFileOrDefault BaseConfiguration.defaultBaseConfigurationFilePath
+    let config: BaseConfiguration = BaseConfiguration.readFromFileOrDefault BaseConfiguration.defaultBaseConfigurationFilePath
     printfn "\nConfig:  %A" config 
 
 
