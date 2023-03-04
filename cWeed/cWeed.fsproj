@@ -7,7 +7,6 @@
     <Compile Include="Configuration.fs" />
     <Compile Include="Register.fs" />
     <Compile Include="Watcher.fs" />
-    <Compile Include="Evaluator.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

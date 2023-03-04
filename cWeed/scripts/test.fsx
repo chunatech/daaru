@@ -1,17 +1,18 @@
 #r "nuget: canopy"
 #r "nuget: Selenium.WebDriver.ChromeDriver"
+//#r @"path" // direct path to dll/package
 
 open canopy.runner.classic
 open canopy.configuration
 open canopy.classic
 
-canopy.configuration.chromeDir <- "./bin/Debug/net6.0/"
+canopy.configuration.chromeDir <- "bin/Debug/net6.0/"
 
 //start an instance of selected browser
 let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()
 browserOptions.AddArgument("--no-sandbox")
 browserOptions.AddArgument("--incognito")
-browserOptions.AddArgument("--headless")
+//browserOptions.AddArgument("--headless")
 let browserWO: canopy.types.BrowserStartMode =  canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions)
 start browserWO
 
@@ -20,7 +21,7 @@ start browserWO
     //this is an F# function body, it's whitespace enforced
 
     //go to url
-    url "https://amazon.com"
+    url "http://lefthandedgoat.github.io/canopy/testpages/"
 
     //assert that the element with an id of 'welcome' has
     //the text 'Welcome'

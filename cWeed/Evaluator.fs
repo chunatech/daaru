@@ -53,11 +53,21 @@ let evaluate (path: string) =
     let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
     if errs.Length > 0 then printfn "Open Errors : %A" errs
 
-    let (res: Choice<FsiValue option,exn>),(errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalExpressionNonThrowing(sprintf "map;;")
-    if errs.Length > 0 then printfn "Get map Errors : %A" errs
+    // let (res: Choice<FsiValue option,exn>),(errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalExpressionNonThrowing(sprintf "map;;")
+    // if errs.Length > 0 then printfn "Get map Errors : %A" errs
+
+    let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "#quit;;")
+    if errs.Length > 0 then printfn "Quit Errors : %A" errs
 
     // match res with
     // | Choice1Of2 (Some (f: FsiValue)) ->
     //     f.ReflectionValue :?> Transformation |> Some
     // | _ -> None
     ()
+
+
+let evalScript (path: string) =
+    task {
+        printfn $"Running %s{path}..."
+        evaluate path
+    }
