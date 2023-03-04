@@ -1,0 +1,8 @@
+{
+    "scriptDirectories" : [ "/scripts" ],
+    "pollingInterval" : 5,
+    "browser": "chrome",
+    "browserOptions": ["no-sandbox", "incognito", "headless"],
+    "browserDriverDir": "/drivers", 
+    "nugetPackages": []
+}

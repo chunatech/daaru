@@ -1,23 +1,20 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
-
   <ItemGroup>
-    <Compile Include="Configurator.fs" />
+    <Compile Include="Configuration.fs" />
     <Compile Include="Register.fs" />
     <Compile Include="Watcher.fs" />
     <Compile Include="Evaluator.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="FSharp.Data" Version="5.0.2" />
     <PackageReference Include="canopy" Version="2.1.5" />
     <PackageReference Include="FSharp.Compiler.Service" Version="41.0.7" />
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="110.0.5481.7700" />
+    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
   </ItemGroup>
-
 </Project>

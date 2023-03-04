@@ -8,9 +8,10 @@
 // https://fsharp.github.io/fsharp-compiler-docs/fcs/interactive.html
 
 open System.IO
+open Thoth.Json.Net
 
 // Open modules internal to the project
-open Configurator
+open Configuration
 open Register
 open Watcher
 open Evaluator
@@ -20,6 +21,9 @@ open Evaluator
 let main (argv: string[]) =
     // Recursively search each script directory defined in config
     // For each directory and subdirectory:
+
+    let config = BaseConfiguration.readFromFileOrDefault BaseConfiguration.defaultBaseConfigurationFilePath
+    printfn "\nConfig:  %A" config 
 
 
     // -- Build .cwt and .fsx watchers for that directory
