@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utils.fs" />
+    <Compile Include="Logger.fs" />
     <Compile Include="Configuration.fs" />
     <Compile Include="CWeedTransactions.fs" />
     <Compile Include="Register.fs" />

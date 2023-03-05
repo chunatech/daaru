@@ -13,6 +13,7 @@ open System.Threading.Tasks
 
 // Open modules internal to the project
 open Utils
+open Log
 open Configuration
 open CWeedTransactions
 
