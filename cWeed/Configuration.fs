@@ -16,9 +16,17 @@ type BaseConfiguration = {
     browserDriverDir: string
     nugetPackages: string array
 }
+with
+    static member Default = {
+        BaseConfiguration.scriptDirectories = [| "./scripts" |]
+        pollingInterval = 5
+        browser = "chrome"
+        browserOptions = [||]
+        browserDriverDir = "/drivers"
+        nugetPackages = [||]
+    }
 
 type DirectoryConfiguration = {
-    directory: string
     pollingInterval: int 
     browser: string 
     browserOptions: string array 
@@ -35,10 +43,6 @@ type TransactionConfiguration = {
     nugetPackages: string array
 }
 
-type Configuration =
-    | BaseConfig of BaseConfiguration
-    | DirectoryConfig of DirectoryConfiguration
-    | TransactionConfig of TransactionConfiguration
 
 module BaseConfiguration = 
     /// default configuration location information. Still subject to location/naming change at this time
@@ -62,23 +66,13 @@ module BaseConfiguration =
     
     /// default record to use base configuration in case there is no specified configuration or the specified 
     /// is not found or improperly formatted 
-    let defaultConfig: BaseConfiguration = 
-        ({
-            scriptDirectories = [| "/scripts" |]
-            pollingInterval = 5
-            browser = "chrome"
-            browserOptions = [||]
-            browserDriverDir = "/drivers"
-            nugetPackages = [||]
-        })
+    let defaultConfig: BaseConfiguration = BaseConfiguration.Default
 
     /// takes in a filepath to a base conf file as filepath param. at this time all fields are required 
     /// returns either the configuration read from file or default configuration defined in Default method ^
     let readFromFileOrDefault (filepath:string) = 
-        (
             match File.ReadAllText(filepath) |> Decode.fromString decoder with 
                 | Ok r -> r
                 | Error err -> 
                     printfn "[Configurator.ReadInFileConf]:  %s" err
                     defaultConfig
-        )

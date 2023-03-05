@@ -2,8 +2,7 @@ module Watcher
 // Filtered watcher of filesystem, to look for any new .cwt or .fsx files, then take action on them.
 
 open System.IO
-
-open Register
+open Configuration
 
 let create (filter: string) addCb rmCb updateCb (dir: string) =
     if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore
@@ -23,13 +22,23 @@ let create (filter: string) addCb rmCb updateCb (dir: string) =
 let remove (path: string) =
     printfn "%s removed" path
     // let fn = Path.GetFileNameWithoutExtension path
-    // Register.remove fn
+    Register.remove path
 
 
 let add (path: string) =
     printfn "%s added" path
-    // Evaluator.evaluate path
-    Register.add path
+    let ext = FileInfo(path).Extension
+    let dirConfig = BaseConfiguration.defaultConfig
+    let config: TransactionConfiguration = {
+        scriptPath = path
+        pollingInterval = dirConfig.pollingInterval
+        browser = dirConfig.browser
+        browserOptions = dirConfig.browserOptions
+        browserDriverDir = dirConfig.browserDriverDir
+        nugetPackages = dirConfig.nugetPackages
+    }
+
+    Register.add (config)
 
 
 let update (path: string) =

@@ -1,5 +1,5 @@
 {
-    "scriptDirectories" : [ "/scripts" ],
+    "scriptDirectories" : [ "./scripts", "./otherScripts" ],
     "pollingInterval" : 5,
     "browser": "chrome",
     "browserOptions": ["no-sandbox", "incognito", "headless"],

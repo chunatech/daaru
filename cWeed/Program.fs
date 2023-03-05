@@ -12,7 +12,11 @@ open System.Diagnostics
 open System.Threading.Tasks
 
 // Open modules internal to the project
+open Utils
 open Configuration
+open CWeedTransactions
+
+// Set internal global variables
 let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/fsiStandalone"
 // letBaseConfigLocation: string ""
 
@@ -20,19 +24,23 @@ let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/f
 let main (argv: string[]) =
     // Find base/default config file
     // Read config from config file into record
-
-
-    // Recursively search each script directory defined in config
-    // For each directory and subdirectory:
-
     let config: BaseConfiguration = BaseConfiguration.readFromFileOrDefault BaseConfiguration.defaultBaseConfigurationFilePath
     printfn "\nConfig:  %A" config 
 
 
+    // Recursively search each script directory defined in config
+    // For each directory and subdirectory:
+    
+
+    let watchedDirs: DirectoryInfo list = recurseListOfDirectories (config.scriptDirectories |> Array.toList) []
+    let watchedDirs: string list = watchedDirs |> List.map(fun (d: DirectoryInfo) -> d.FullName)
+    printfn "%A" watchedDirs
+
+
     // -- Build .cwt and .fsx watchers for that directory
     // -- Add watchers to list for tracking and cleanup later
-    let watcherList: FileSystemWatcher list = Watcher.createForDirs ["scripts"] []
-
+    let watcherList: FileSystemWatcher list = Watcher.createForDirs watchedDirs []
+        
 
     // -- Find any local config file for that directory
 
@@ -63,22 +71,19 @@ let main (argv: string[]) =
     // For any without a thread running, start thread on polling cycle
     while true do
         let input: string = System.Console.ReadLine ()
-        let lst: string list = Register.get ()
+        let lst: Transaction list = Register.get ()
 
-        let res: string = (lst |> List.filter (fun (x: string) -> x.EndsWith input)) |> List.head
-        let fi: FileInfo = FileInfo(fsiSaLocation)
-        let psi: ProcessStartInfo = new ProcessStartInfo(fi.FullName, $"%s{res}")
+        let res: Transaction = (lst |> List.filter (fun (x: Transaction) -> x.Configuration.scriptPath.EndsWith input)) |> List.head
+        let fsiFi: FileInfo = FileInfo(fsiSaLocation)
+        let psi: ProcessStartInfo = new ProcessStartInfo(fsiFi.FullName, $"%s{res.Configuration.scriptPath}")
         psi.UseShellExecute <- false
         let testTask (psi: ProcessStartInfo) =
             task {
                 Process.Start(psi) |> ignore
             }
         let task1: Task<unit> = testTask psi
-        let task2: Task<unit> = testTask psi
-        let task3: Task<unit> = testTask psi
-        let task4: Task<unit> = testTask psi
 
-        Task.WaitAll(task1, task2, task3, task4)
+        task1.Wait()
         printfn "Result: %A" res
 
     0 // return an integer exit code
