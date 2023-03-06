@@ -98,6 +98,7 @@ module Log
 open System
 open System.IO
 open System.Reflection
+open System.Text
 open System.Collections.Concurrent
 open System.Text.RegularExpressions
 
@@ -184,7 +185,7 @@ with
     /// creates a single log entry as record of LogEntry type
     static member Create level caller msg = 
         {
-            timestamp = createTimeStampNow DateTime.Now TimeStampDateFormat
+            timestamp = CreateTimeStampNow DateTime.Now TimeStampDateFormat
             level = level 
             logger = caller
             message = Regex.Replace(msg, """[\t|\n|\s]+""", " ") //formats the string to replace tabs/newlines/spaces with single space
@@ -269,6 +270,11 @@ with
                 l1.PrintToConsole Unstructured
                 LoggerSettings.Default
         )
+
+
+
+let LogEntryQueue = ConcurrentQueue<LogEntry>()
+
 
 
 /// holds the current log settings. settings are stored in the executable directory under the name 
