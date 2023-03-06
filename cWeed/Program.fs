@@ -52,11 +52,23 @@ let main (argv: string[]) =
         let input: string = System.Console.ReadLine ()
         let lst: Transaction list = Register.get ()
 
-        let res: Transaction = (lst |> List.filter (fun (x: Transaction) -> x.Configuration.scriptPath.EndsWith input)) |> List.head
+        let res: Transaction = (lst |> List.filter (fun (x: Transaction) -> 
+            x.Configuration.scriptPath.EndsWith input)) |> List.head
         let fsiFi: FileInfo = FileInfo(fsiSaLocation)
-        let psi: ProcessStartInfo = new ProcessStartInfo(fsiFi.FullName, $"%s{res.Configuration.scriptPath}")
-        psi.UseShellExecute <- false
-        let testTask (psi: ProcessStartInfo) =
+
+        // once a minute:
+        //  check the run queue
+        //  if the run queue still has unprocessed items, log a warning or error
+        //  check the transaction register for transactions that need to start
+        //    (meaning that  last run time + poll time is the greater or equal to the current time)
+        //  enqueue any transactions that need to start to the run queue
+        //  wait 60 seconds
+
+        let testTask (transaction: Transaction) =
+            let scriptPath: string = transaction.Configuration.scriptPath
+            let psi: ProcessStartInfo = new ProcessStartInfo(fsiFi.FullName, $"%s{scriptPath}")
+            psi.UseShellExecute <- false
+
             task {
                 let p: Process = new Process()
                 p.StartInfo <- psi
@@ -64,8 +76,8 @@ let main (argv: string[]) =
                 // p.Exited += EventHandler
                 p.Start() |> ignore
             }
-        let task1: Task<unit> = testTask psi
 
+        let task1: Task<unit> = testTask res
         task1.Wait()
         printfn "Result: %A" res
 
