@@ -298,3 +298,41 @@ let GetLogDirectoryOrCreateItFromSettings =
     // method returns an exception then even the defaults would be bad. should we crash if this happens? 
     // would it ever actually happen? 
     Path.Join(location, dirname) |> Directory.CreateDirectory
+
+
+
+module LogEntryFileHanding =
+    open System.Linq
+    
+    /// returns a FileStream for the currently used log file. If a file does 
+    /// not exist, as in during the first run of the program, the file will 
+    /// be created. 
+    let currentLogFilePath = 
+        let logDir = GetLogDirectoryOrCreateItFromSettings.FullName
+        Path.Join(logDir, $"{ApplicationName}.log")
+    
+
+    /// write a single entry to the log file. this method will manage opening 
+    /// and closing the filestream
+    let WriteLogEntryToFile (entry: LogEntry) = 
+        let logFile = File.OpenWrite(currentLogFilePath)
+        logFile.Position <- logFile.Length
+        let bytes = Encoding.UTF8.GetBytes $"%s{entry.ToLogString}\n"
+        logFile.Write(bytes)
+        logFile.Flush() 
+        logFile.Close()
+        
+
+    /// if true the file 
+    let IsRollSize = 
+        int64(FileInfo(currentLogFilePath).Length / int64(1024 * 1024)) >= GetLoggerSettings.rollingSize
+    
+
+    /// rolls the log file such that the first entry timestamp (to seconds) is the first 
+    /// timestamp in the name and the second timestamp is created on roll 
+    let RollLogFile = 
+        let logFileToRename = currentLogFilePath
+        let firstLine = File.ReadLines(logFileToRename) |> Enumerable.First 
+        let firstTimeStamp = (firstLine.Split('.')[0]).TrimEnd()
+        let newLogFileName = (Path.Join(currentLogFilePath, $"{firstTimeStamp}_{(CreateTimeStampNow (DateTime.Now) FileNameDateFormat)}"))
+        (File.Move(logFileToRename, newLogFileName))
