@@ -65,22 +65,17 @@ TASKS:
 [/] data LogEntryQueue (Queue)
 
 
-[/] create LoggerSettings record
-    [ ] 
+[x] create LoggerSettings record
     [x] method ReadSettingsFromFile (string filepath)
     [x] create LoggerSettings record and populate with user 
         settings || defaults if applicable
-    [ ] if user provides partial settings, compose settings 
-        record that contains users selected settings with 
-        defaults for the remainder. (write to file?)
 
 [/] create Logger module
-    [_] hold current LoggerSettings record 
-    [_] create log file in LogDirectoryLocation
+    [x] hold current LoggerSettings record 
     [x] check if log directory exists in LogDirectoryLocation and 
-        create if !Exists
-    [x] hold LogEntryQueue
-    [/] hold CurrentLogFilePath (string) 
+        create if !Exists using location and name specified in settings
+    [ ] hold CurrentLogFilePath (string) 
+    [ ] hold LogEntryQueue
     [_] LogEntryQueue management 
         [_] queue a log entry 
         [_] try dequeuing a log entry #figure out how to fail this..
@@ -91,33 +86,32 @@ TASKS:
         [_] rename the current log file to specified fmt ^ 
         [_] create a new log file with naming convention ^
 
+
+NON MVP Tasks: 
+[ ] fix settings file to have optional fields and instead compose with defaults for whatever is not 
+    present
+[_] create log settings file in LogDirectoryLocation. This is up for discussion at this time and non priority
+
 *)
 module Log
 
 open System
 open System.IO
-open System.Collections.Concurrent
 open System.Reflection
-open Thoth.Json.Net
+open System.Collections.Concurrent
 open System.Text.RegularExpressions
 
-/// formatter for DateTime obj that is specified to the milisecond 
-/// for use with timestamps in LogEntry
-let TimeStampDateFormat = @"yyyy/MM/dd HH:mm:ss.fff"
+// handles json conversions 
+open Thoth.Json.Net
 
-/// formatter for DateTime obj that is specified to the second 
-/// for use with log files being rolled
-let FileNameDateFormat = @"yyyy/MM/dd HH:mm:ss"
+// general utilities 
+open Utils
 
 
-/// this method creates a timestamp string formatted for LogEntry records
-let createTimeStampNow (datetime: DateTime) = (datetime).ToString(TimeStampDateFormat)
-
-
-/// creates a string that describes where the LogEntry is being created from 
+/// creates a string that describes where a LogEntry is being created from 
 /// format is "FileModuleName.DeclaringModuleName.MethodName". this fn covers nesting 
 /// of one module deep at this time. further nested modules are not tested 
-let createLoggerString (currentMethod: MethodBase) : string = 
+let createCallerMethodString (currentMethod: MethodBase) : string = 
     let name = currentMethod.Name
     let declaringType = currentMethod.DeclaringType.ToString() |> String.map  (fun x -> if x = '+' then '.' else x)
     declaringType + "." + name
@@ -190,10 +184,10 @@ with
     /// creates a single log entry as record of LogEntry type
     static member Create level caller msg = 
         {
-            timestamp = createTimeStampNow DateTime.Now
+            timestamp = createTimeStampNow DateTime.Now TimeStampDateFormat
             level = level 
             logger = caller
-            message = Regex.Replace(msg, """[\t|\n|\s]+""", " ")
+            message = Regex.Replace(msg, """[\t|\n|\s]+""", " ") //formats the string to replace tabs/newlines/spaces with single space
         }
 
     /// formats the LogEntry to a json string using thoth library
@@ -209,7 +203,6 @@ with
         match fmt with 
         | Unstructured -> Console.WriteLine this.ToLogString
         | Json -> Console.WriteLine this.ToJsonString
-
 
 
 
@@ -256,45 +249,46 @@ with
     /// method returns the default settings
     static member ReadInFromFileOrDefaults filepath = 
         (
+            let callerMethod = MethodBase.GetCurrentMethod() |> createCallerMethodString 
             if File.Exists(filepath) then 
                 match File.ReadAllText(filepath) |> Decode.fromString (LoggerSettings.decoder) with 
                     | Ok settings -> settings 
                     | Error msg -> 
-                        // todo log the json was bad
+                        // create logs
+                        let l1 = LogEntry.Create ERROR callerMethod $"from Thoth.Json.Net {msg}"
+                        let l2 = LogEntry.Create WARN callerMethod $"invalid json at {filepath}... using defaults"
+                        
+                        // TODO: queue the logs and handle them properly
+                        l1.PrintToConsole Unstructured
+                        l2.PrintToConsole Unstructured
+                        
                         LoggerSettings.Default
             else 
-                // todo: log that file did not exist
-                // create a log file for next run 
-                File.WriteAllText(filepath, LoggerSettings.encoder LoggerSettings.Default)
+                let l1 = LogEntry.Create WARN callerMethod $"file at {filepath} did not exist... using defaults"
+                // TODO: queue the logs and handle them properly
+                l1.PrintToConsole Unstructured
                 LoggerSettings.Default
         )
 
 
-
-/// a queue with concurrency capability that holds LogEntry records
-let LogQueue:  ConcurrentQueue<LogEntry> = ConcurrentQueue<LogEntry>()
-
-
-/// directory has to be named logs
-/// handles returning either the directory or creating one for log dir
-/// side effects: directory creation on NOTFOUND
-/// TODO: handle logging for this method
-let GetLogDirectoryOrCreateIt location dirname =
-    match DirectoryInfo(location).EnumerateDirectories(dirname) |> Seq.tryExactlyOne with 
-        | None ->
-            //printfn "did not find existing directory.. creating one" 
-            let dirpath = Path.Join(location, dirname)
-            
-            let logMsg = $"did not find existing directory for {dirpath}.. creating one"
-            let caller = MethodBase.GetCurrentMethod() |> createLoggerString
-            let level = LogLevel.WARN
-            let logEntry = LogEntry.Create level caller logMsg
-            
-            logEntry.PrintToConsole LogFormat.Unstructured
-
-            Directory.CreateDirectory(dirpath)
-        | Some dir ->
-            printfn "found %A directory, setting LogDir to located directory" dir
-            dir
+/// holds the current log settings. settings are stored in the executable directory under the name 
+/// settings.log.json
+let GetLoggerSettings = LoggerSettings.ReadInFromFileOrDefaults (Path.Join(DirectoryInfo(".").FullName, "settings.log.json")) 
 
 
+/// uses the informatino from GetLoggerSettings param to get the log directory or create it, if it does not 
+/// exist already
+let GetLogDirectoryOrCreateItFromSettings = 
+    let location = GetLoggerSettings.logDirPath
+    let dirname = GetLoggerSettings.logDirName
+
+    let caller = createCallerMethodString (MethodBase.GetCurrentMethod())
+    let logmsg = $"checking for log directory at {Path.Join(location, dirname)}. If one does not exist, it will be created at this location"
+    let log = LogEntry.Create INFO caller logmsg
+    log.PrintToConsole Unstructured 
+
+    // @Chase currently not covering exceptions here as ReadInFromFileOrDefaults covers them broadly.. futher consider 
+    // if coverage is needed here and how to handle it as defaults are already taken before this poing. if this 
+    // method returns an exception then even the defaults would be bad. should we crash if this happens? 
+    // would it ever actually happen? 
+    Path.Join(location, dirname) |> Directory.CreateDirectory
