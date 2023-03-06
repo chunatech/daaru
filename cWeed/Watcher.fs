@@ -15,6 +15,7 @@ let create (filter: string) addCb rmCb updateCb (dir: string) =
     // watcher.Changed.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> updateCb)
     watcher.SynchronizingObject <- null
     watcher.EnableRaisingEvents <- true
+    watcher.IncludeSubdirectories <- true
 
     watcher
 
@@ -27,8 +28,8 @@ let remove (path: string) =
 
 let add (path: string) =
     printfn "%s added" path
-    let ext = FileInfo(path).Extension
-    let dirConfig = BaseConfiguration.defaultConfig
+    // let ext = FileInfo(path).Extension
+    let dirConfig: BaseConfiguration = BaseConfiguration.defaultConfig
     let config: TransactionConfiguration = {
         scriptPath = path
         pollingInterval = dirConfig.pollingInterval
@@ -45,10 +46,10 @@ let update (path: string) =
     printfn "%s added or updated" path
 
 
-let rec createForDirs (dirList: string list) (watcherList: FileSystemWatcher list) =
-    match dirList with
-    | [] -> watcherList
-    | (dir: string) :: (dirs: string list) -> 
-        let watcherList: FileSystemWatcher list = [create "*.cwt" add remove update dir] @ watcherList
-        let watcherList: FileSystemWatcher list = [create "*.fsx" add remove update dir] @ watcherList
-        createForDirs dirs watcherList
+let createForDirs (dirArr: string array) =
+    let mutable watcherArr: FileSystemWatcher array = [||]
+    for dir: string in dirArr do
+        watcherArr <- Array.append [|create "*.cwt" add remove update dir|] watcherArr
+        watcherArr <- Array.append [|create "*.fsx" add remove update dir|] watcherArr
+        ()
+    watcherArr
