@@ -22,20 +22,6 @@ let maxThreadCount: int32 = 1
 let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/fsiStandalone"
 // letBaseConfigLocation: string ""
 
-let registerExistingScripts (confDirs: string array) =
-    let mutable scriptPaths: string array = [||]
-    for dir: string in confDirs do
-        printfn "%s" dir
-        let dirInfo: DirectoryInfo = DirectoryInfo(dir)
-        let cwtScripts: FileInfo array = dirInfo.GetFiles("*.cwt", SearchOption.AllDirectories)
-        let fsxScripts: FileInfo array = dirInfo.GetFiles("*.fsx", SearchOption.AllDirectories)
-        scriptPaths <- Array.append (cwtScripts |> Array.map(fun (fi: FileInfo) -> fi.FullName)) scriptPaths
-        scriptPaths <- Array.append (fsxScripts |> Array.map(fun (fi: FileInfo) -> fi.FullName)) scriptPaths
-    
-    for sp: string in scriptPaths do
-        Watcher.add sp
-
-    scriptPaths
 
 [<EntryPoint>]
 let main (argv: string[]) =
@@ -45,7 +31,7 @@ let main (argv: string[]) =
     printfn "\nConfig:  %A" config 
 
     // find all existing scripts in configured directories and register them
-    let existingScripts = registerExistingScripts config.scriptDirectories
+    let existingScripts = Watcher.registerExistingScripts config.scriptDirectories
     // TODO: Log out existingScripts here
 
     // Build .cwt and .fsx watchers for that directory

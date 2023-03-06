@@ -53,3 +53,19 @@ let createForDirs (dirArr: string array) =
         watcherArr <- Array.append [|create "*.fsx" add remove update dir|] watcherArr
         ()
     watcherArr
+
+
+let registerExistingScripts (confDirs: string array) =
+    let mutable scriptPaths: string array = [||]
+    for dir: string in confDirs do
+        printfn "%s" dir
+        let dirInfo: DirectoryInfo = DirectoryInfo(dir)
+        let cwtScripts: FileInfo array = dirInfo.GetFiles("*.cwt", SearchOption.AllDirectories)
+        let fsxScripts: FileInfo array = dirInfo.GetFiles("*.fsx", SearchOption.AllDirectories)
+        scriptPaths <- Array.append (cwtScripts |> Array.map(fun (fi: FileInfo) -> fi.FullName)) scriptPaths
+        scriptPaths <- Array.append (fsxScripts |> Array.map(fun (fi: FileInfo) -> fi.FullName)) scriptPaths
+    
+    for sp: string in scriptPaths do
+        add sp
+
+    scriptPaths
