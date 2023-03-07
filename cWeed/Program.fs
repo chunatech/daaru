@@ -34,7 +34,7 @@ let main (argv: string[]) =
 
     // create settings to pass into the Logger
     let loggerSettings = 
-        LoggerSettings.Create (Path.Join(config.logDirPath, config.logDirName)) config.rollingSize config.logFormat
+        LoggerSettings.Create (Path.Join(config.logDirPath, config.logDirName)) config.rollingSize config.logFormat config.loggingLevel
     
 
     // call the loggers initialization method

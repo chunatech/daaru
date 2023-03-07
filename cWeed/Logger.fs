@@ -191,19 +191,22 @@ type LoggerSettings = {
         logDir: string;
         logFileRollingSize: int
         logFormat: LogFormat
+        loggingLevel: int
     }
 with
 
-    static member Create (logdir: string) (rollsize: int) (fmt: string) = {
+    static member Create (logdir: string) (rollsize: int) (fmt: string) (loglevel: int) = {
         logDir = logdir
         logFileRollingSize = rollsize
         logFormat = LogFormat.FromString fmt
+        loggingLevel = loglevel
     } 
 
     static member Default = {
         logDir = Path.Join(DirectoryInfo(".").FullName, "logs")
         logFileRollingSize = 10
         logFormat = LogFormat.Unstructured
+        loggingLevel = 3
     }
 
 
