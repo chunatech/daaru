@@ -286,6 +286,7 @@ let WriteLogEntryToFile (entry: LogEntry) =
     logFile.Close()
     
 
+/// runs after write log and handles processing the queue of logs
 let ProcessQueue () = 
     while (LogEntryQueue.TryPeek() |> fst) do
         match LogEntryQueue.TryDequeue() with 
@@ -298,11 +299,15 @@ let ProcessQueue () =
             | _ -> 
                 ()
 
-
+/// writes a log to the logfile specified by configuraiton and 
+/// only if the level specified for the log is >= the loggingLevel
+/// field in the configuration (set to Error by default) 
 let WriteLog (level:LogLevel) callerMethod msg =  
     if (int level) >= (int settings.loggingLevel) then
         let entry = LogEntry.Create level callerMethod msg
         LogEntryQueue.Enqueue entry
-        ProcessQueue ()
     else 
         ()
+    // this will process either way as the logger itself queues items
+    // directly in certain scenarios
+    ProcessQueue ()
