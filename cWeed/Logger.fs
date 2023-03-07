@@ -299,7 +299,10 @@ let ProcessQueue () =
                 ()
 
 
-let WriteLog level callerMethod msg =  
-    let entry = LogEntry.Create level callerMethod msg
-    LogEntryQueue.Enqueue entry
-    ProcessQueue ()
+let WriteLog (level:LogLevel) callerMethod msg =  
+    if (int level) >= (int settings.loggingLevel) then
+        let entry = LogEntry.Create level callerMethod msg
+        LogEntryQueue.Enqueue entry
+        ProcessQueue ()
+    else 
+        ()
