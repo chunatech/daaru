@@ -109,29 +109,18 @@ open Thoth.Json.Net
 open Utils
 
 
-/// this union represents the level of log verbosity
+/// this enum represents the level of log verbosity
+/// DEBUG - developer level debugging information
 /// INFO - this is an informational log and occurs whenever an event of significance happens
 /// WARN - these are warnings that something has not happened as stated, but was recoverable
 /// ERROR - this is anything that is caught from a result or catch block
 /// CRITICAL - these are breaking errors that need attention 
-/// DEBUG - developer level debugging information
 type LogLevel = 
-    | INFO
-    | WARN
-    | ERROR 
-    | CRITICAL
-    | DEBUG
-with 
-
-    /// method that gives a string value representing a LogLevel
-    member this.ToString : string = 
-        match this with 
-            | INFO -> "INFO"
-            | WARN -> "WARN"
-            | ERROR -> "ERROR"
-            | CRITICAL -> "CRITICAL"
-            | DEBUG -> "DEBUG"
-
+    | DEBUG = 0
+    | INFO = 1
+    | WARN = 2
+    | ERROR = 3
+    | CRITICAL = 4
 
 
 /// this type describes the log structure and has methods to 
@@ -246,14 +235,14 @@ let InitLogger (settingsFromConfig: LoggerSettings) =
     settings <- settingsFromConfig
 
     // directly add to queue here as logger is not fully initialized yet 
-    let log = LogEntry.Create INFO this $"logger settings: {settings}"
+    let log = LogEntry.Create LogLevel.INFO this $"logger settings: {settings}"
     LogEntryQueue.Enqueue log
     
     // create or locate the log directory
     let dir = Directory.CreateDirectory(settings.logDir)
     
     // directly add to queue here as logger is not fully initialized yet
-    let log = LogEntry.Create INFO this $"creating log directory at {dir} if it does not already exist"
+    let log = LogEntry.Create LogLevel.INFO this $"creating log directory at {dir} if it does not already exist"
     LogEntryQueue.Enqueue log
 
 

@@ -40,8 +40,8 @@ let main (argv: string[]) =
     // call the loggers initialization method
     InitLogger(loggerSettings)
 
-    WriteLog INFO this "logger Initialized"
-    WriteLog INFO this $"base configuration was set to {config}"
+    WriteLog LogLevel.INFO this "logger Initialized"
+    WriteLog LogLevel.INFO this $"base configuration was set to {config}"
 
 
     // find all existing scripts in configured directories and register them
@@ -57,7 +57,7 @@ let main (argv: string[]) =
     let curDirInfo: DirectoryInfo = DirectoryInfo(".")
     // TODO: Log out current directory path
 
-    WriteLog INFO this $"cWeed has started and is running from {curDirInfo.FullName}"
+    WriteLog LogLevel.INFO this $"cWeed has started and is running from {curDirInfo.FullName}"
 
     // Iterate over each file record in Register once a minute.
     // For any without a thread running, start thread on polling cycle
