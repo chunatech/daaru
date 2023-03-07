@@ -13,7 +13,7 @@ open System.Threading.Tasks
 
 // Open modules internal to the project
 open Utils
-open Log
+open Logger
 open Configuration
 open CWeedTransactions
 
@@ -25,10 +25,24 @@ let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/f
 
 [<EntryPoint>]
 let main (argv: string[]) =
+    let this = (System.Reflection.MethodBase.GetCurrentMethod())
     // Find base/default config file
-    // Read config from config file into record
-    let config: BaseConfiguration = BaseConfiguration.readFromFileOrDefault BaseConfiguration.defaultBaseConfigurationFilePath
-    printfn "\nConfig:  %A" config 
+    // Read config from config file into record 
+    let config: BaseConfiguration = 
+        BaseConfiguration.readFromFileOrDefault BaseConfiguration.defaultBaseConfigurationFilePath
+
+
+    // create settings to pass into the Logger
+    let loggerSettings = 
+        LoggerSettings.Create (Path.Join(config.logDirPath, config.logDirName)) config.rollingSize config.logFormat
+    
+
+    // call the loggers initialization method
+    InitLogger(loggerSettings)
+
+    WriteLog INFO this "logger Initialized"
+    WriteLog INFO this $"base configuration was set to {config}"
+
 
     // find all existing scripts in configured directories and register them
     let existingScripts = Watcher.registerExistingScripts config.scriptDirectories
@@ -42,8 +56,8 @@ let main (argv: string[]) =
     // print running directory to console and log
     let curDirInfo: DirectoryInfo = DirectoryInfo(".")
     // TODO: Log out current directory path
-    printfn "cWeed has started and is running from:\n%s" curDirInfo.FullName
 
+    WriteLog INFO this $"cWeed has started and is running from {curDirInfo.FullName}"
 
     // Iterate over each file record in Register once a minute.
     // For any without a thread running, start thread on polling cycle

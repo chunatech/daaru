@@ -62,7 +62,7 @@ TASKS:
 [x] data LogLevel (option)
 [x] data LogEntry (record)
 [x] data LoggerSettings (record)
-[/] data LogEntryQueue (Queue)
+[x] data LogEntryQueue (Queue)
 
 
 [x] create LoggerSettings record
@@ -74,26 +74,25 @@ TASKS:
     [x] hold current LoggerSettings record 
     [x] check if log directory exists in LogDirectoryLocation and 
         create if !Exists using location and name specified in settings
-    [ ] hold CurrentLogFilePath (string) 
-    [ ] hold LogEntryQueue
-    [_] LogEntryQueue management 
-        [_] queue a log entry 
+    [x] hold CurrentLogFilePath (string) 
+    [x] hold LogEntryQueue
+    [/] LogEntryQueue management 
+        [x] queue a log entry 
         [_] try dequeuing a log entry #figure out how to fail this..
-    [_] method AppendToLogFile (CurrentLogFilePath) (LogEntry)
-    [_] method RenameLogFile currentLogFile
-    [_] method RollLogFile 
-    [_] handle roll the logs when the log file reaches ~10MB
-        [_] rename the current log file to specified fmt ^ 
-        [_] create a new log file with naming convention ^
+    [x] method WriteLog level callerMethod msg
+
+    These are built but need to be tested 
+    [/] method RollLogFile  
+    [/] handle roll the logs when the log file reaches ~10MB
+        [/] rename the current log file to specified fmt ^ 
+        [/] create a new log file with naming convention ^
 
 
 NON MVP Tasks: 
 [ ] fix settings file to have optional fields and instead compose with defaults for whatever is not 
     present
-[_] create log settings file in LogDirectoryLocation. This is up for discussion at this time and non priority
-
 *)
-module Log
+module Logger
 
 open System
 open System.IO
@@ -101,21 +100,13 @@ open System.Reflection
 open System.Text
 open System.Collections.Concurrent
 open System.Text.RegularExpressions
+open System.Linq
 
 // handles json conversions 
 open Thoth.Json.Net
 
 // general utilities 
 open Utils
-
-
-/// creates a string that describes where a LogEntry is being created from 
-/// format is "FileModuleName.DeclaringModuleName.MethodName". this fn covers nesting 
-/// of one module deep at this time. further nested modules are not tested 
-let createCallerMethodString (currentMethod: MethodBase) : string = 
-    let name = currentMethod.Name
-    let declaringType = currentMethod.DeclaringType.ToString() |> String.map  (fun x -> if x = '+' then '.' else x)
-    declaringType + "." + name
 
 
 /// this union represents the level of log verbosity
@@ -187,7 +178,7 @@ with
         {
             timestamp = CreateTimeStampNow DateTime.Now TimeStampDateFormat
             level = level 
-            logger = caller
+            logger = CreateCallerMethodString caller
             message = Regex.Replace(msg, """[\t|\n|\s]+""", " ") //formats the string to replace tabs/newlines/spaces with single space
         }
 
@@ -205,134 +196,118 @@ with
         | Unstructured -> Console.WriteLine this.ToLogString
         | Json -> Console.WriteLine this.ToJsonString
 
+    
 
-
-/// this record contains the information from the settings file describing 
-/// where the logger will store the log files, the name of the direcotry it 
-/// will use/create and the size of the file it will aim for before rolling 
-/// the log file over
 type LoggerSettings = {
-    logDirName: string;
-    logDirPath: string;
-    rollingSize: int;
-    format: string;
-}
-with 
+        logDir: string;
+        logFileRollingSize: int
+        logFormat: LogFormat
+    }
+with
 
-    /// these are the defaults for the logger settings
-    static member Default = 
-        {
-            logDirName = "logs"
-            logDirPath = DirectoryInfo(".").FullName
-            rollingSize = 10
-            format = Unstructured.ToString
-        }
+    static member Create (logdir: string) (rollsize: int) (fmt: string) = {
+        logDir = logdir
+        logFileRollingSize = rollsize
+        logFormat = LogFormat.FromString fmt
+    } 
 
-    /// this handles decoding the settings from json. at this time all the fields are 
-    /// required but ultimatley should work such that any ommited settings are 
-    /// populated with default values
-    /// TODO: accept the partial settings 
-    static member decoder = 
-        Decode.object (fun get ->
-            {
-                logDirName = get.Required.Field "logDirName" Decode.string
-                logDirPath = get.Required.Field "logDirPath" Decode.string
-                rollingSize = get.Required.Field "rollingSize" Decode.int
-                format = get.Required.Field "format" Decode.string
-            }
-        )
-
-    /// encodes logger settings as json string for writing settings to file 
-    static member encoder = 
-        Encode.Auto.toString
-
-    /// reads in logger settings file and if successful, returns the settings else this 
-    /// method returns the default settings
-    static member ReadInFromFileOrDefaults filepath = 
-        (
-            let callerMethod = MethodBase.GetCurrentMethod() |> createCallerMethodString 
-            if File.Exists(filepath) then 
-                match File.ReadAllText(filepath) |> Decode.fromString (LoggerSettings.decoder) with 
-                    | Ok settings -> settings 
-                    | Error msg -> 
-                        // create logs
-                        let l1 = LogEntry.Create ERROR callerMethod $"from Thoth.Json.Net {msg}"
-                        let l2 = LogEntry.Create WARN callerMethod $"invalid json at {filepath}... using defaults"
-                        
-                        // TODO: queue the logs and handle them properly
-                        l1.PrintToConsole Unstructured
-                        l2.PrintToConsole Unstructured
-                        
-                        LoggerSettings.Default
-            else 
-                let l1 = LogEntry.Create WARN callerMethod $"file at {filepath} did not exist... using defaults"
-                // TODO: queue the logs and handle them properly
-                l1.PrintToConsole Unstructured
-                LoggerSettings.Default
-        )
+    static member Default = {
+        logDir = Path.Join(DirectoryInfo(".").FullName, "logs")
+        logFileRollingSize = 10
+        logFormat = LogFormat.Unstructured
+    }
 
 
+/// this will contain the stored settings derived from the settings file after 
+/// initialization. before initialization (or if this doesn't occur this is set)
+/// to the default record for LoggerSettings
+let mutable settings = LoggerSettings.Default 
 
+/// holds the log entries to be written. Only the Logger should ever use this
 let LogEntryQueue = ConcurrentQueue<LogEntry>()
 
 
+/// this is how the current log file name will look
+let logFileName: string = 
+    if settings.logFormat = LogFormat.Json then 
+        $"{ApplicationName}.log.json"
+    else 
+        $"{ApplicationName}.log"
 
-/// holds the current log settings. settings are stored in the executable directory under the name 
-/// settings.log.json
-let GetLoggerSettings = LoggerSettings.ReadInFromFileOrDefaults (Path.Join(DirectoryInfo(".").FullName, "settings.log.json")) 
-
-
-/// uses the informatino from GetLoggerSettings param to get the log directory or create it, if it does not 
-/// exist already
-let GetLogDirectoryOrCreateItFromSettings = 
-    let location = GetLoggerSettings.logDirPath
-    let dirname = GetLoggerSettings.logDirName
-
-    let caller = createCallerMethodString (MethodBase.GetCurrentMethod())
-    let logmsg = $"checking for log directory at {Path.Join(location, dirname)}. If one does not exist, it will be created at this location"
-    let log = LogEntry.Create INFO caller logmsg
-    log.PrintToConsole Unstructured 
-
-    // @Chase currently not covering exceptions here as ReadInFromFileOrDefaults covers them broadly.. futher consider 
-    // if coverage is needed here and how to handle it as defaults are already taken before this poing. if this 
-    // method returns an exception then even the defaults would be bad. should we crash if this happens? 
-    // would it ever actually happen? 
-    Path.Join(location, dirname) |> Directory.CreateDirectory
+let logFilePath = Path.Join(settings.logDir, logFileName)
 
 
-
-module LogEntryFileHanding =
-    open System.Linq
+/// initialize the logger with the settings from the user 
+let InitLogger (settingsFromConfig: LoggerSettings) = 
+    // for logging purposes
+    let this = MethodBase.GetCurrentMethod()
     
-    /// returns a FileStream for the currently used log file. If a file does 
-    /// not exist, as in during the first run of the program, the file will 
-    /// be created. 
-    let currentLogFilePath = 
-        let logDir = GetLogDirectoryOrCreateItFromSettings.FullName
-        Path.Join(logDir, $"{ApplicationName}.log")
+    // give logger the settings from the configuration file
+    settings <- settingsFromConfig
+
+    // directly add to queue here as logger is not fully initialized yet 
+    let log = LogEntry.Create INFO this $"logger settings: {settings}"
+    LogEntryQueue.Enqueue log
     
-
-    /// write a single entry to the log file. this method will manage opening 
-    /// and closing the filestream
-    let WriteLogEntryToFile (entry: LogEntry) = 
-        let logFile = File.OpenWrite(currentLogFilePath)
-        logFile.Position <- logFile.Length
-        let bytes = Encoding.UTF8.GetBytes $"%s{entry.ToLogString}\n"
-        logFile.Write(bytes)
-        logFile.Flush() 
-        logFile.Close()
-        
-
-    /// if true the file 
-    let IsRollSize = 
-        int64(FileInfo(currentLogFilePath).Length / int64(1024 * 1024)) >= GetLoggerSettings.rollingSize
+    // create or locate the log directory
+    let dir = Directory.CreateDirectory(settings.logDir)
     
+    // directly add to queue here as logger is not fully initialized yet
+    let log = LogEntry.Create INFO this $"creating log directory at {dir} if it does not already exist"
+    LogEntryQueue.Enqueue log
 
-    /// rolls the log file such that the first entry timestamp (to seconds) is the first 
-    /// timestamp in the name and the second timestamp is created on roll 
-    let RollLogFile = 
-        let logFileToRename = currentLogFilePath
+
+
+/// if true the file is at least of the size specified for roll and should be rolled
+/// over using the RollLogFile method below
+let IsRollSize () = 
+    if File.Exists(logFilePath) then 
+        int64(FileInfo(logFilePath).Length / int64(1024 * 1024)) >= settings.logFileRollingSize
+    else 
+        false 
+
+
+/// rolls the log file such that the first entry timestamp (to seconds) is the first 
+/// timestamp in the name and the second timestamp is created on roll 
+let RollLogFile () = 
+    if IsRollSize () then 
+        let logFileToRename = logFilePath
         let firstLine = File.ReadLines(logFileToRename) |> Enumerable.First 
         let firstTimeStamp = (firstLine.Split('.')[0]).TrimEnd()
-        let newLogFileName = (Path.Join(currentLogFilePath, $"{firstTimeStamp}_{(CreateTimeStampNow (DateTime.Now) FileNameDateFormat)}"))
-        (File.Move(logFileToRename, newLogFileName))
+        let filename = (
+            match settings.logFormat with 
+                | Json -> $"{ApplicationName}{firstTimeStamp}_{(CreateTimeStampNow (DateTime.Now) FileNameDateFormat)}.log.json"
+                | _ -> $"{ApplicationName}_{firstTimeStamp}_{(CreateTimeStampNow (DateTime.Now) FileNameDateFormat)}.log"
+        )        
+        let newLogFilePath = Path.Join(settings.logDir, filename)
+        File.Move(logFileToRename, newLogFilePath)
+    ()
+
+/// write a single entry to the log file. this method will manage opening 
+/// and closing the filestream
+let WriteLogEntryToFile (entry: LogEntry) = 
+    let logFile = File.OpenWrite(logFilePath)
+    logFile.Position <- logFile.Length
+    let bytes = Encoding.UTF8.GetBytes $"%s{entry.ToLogString}\n"
+    logFile.Write(bytes)
+    logFile.Flush() 
+    logFile.Close()
+    
+
+let ProcessQueue () = 
+    while (LogEntryQueue.TryPeek() |> fst) do
+        match LogEntryQueue.TryDequeue() with 
+            | (true, entry) -> 
+                if IsRollSize () then 
+                    RollLogFile ()
+                entry.PrintToConsole LogFormat.Unstructured
+                WriteLogEntryToFile entry 
+            // TODO: Handle this better 
+            | _ -> 
+                ()
+
+
+let WriteLog level callerMethod msg =  
+    let entry = LogEntry.Create level callerMethod msg
+    LogEntryQueue.Enqueue entry
+    ProcessQueue ()

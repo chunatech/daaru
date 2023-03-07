@@ -15,6 +15,10 @@ type BaseConfiguration = {
     browserOptions: string array 
     browserDriverDir: string
     nugetPackages: string array
+    logDirName: string;
+    logDirPath: string;
+    rollingSize: int;
+    logFormat: string;
 }
 with
     static member Default = {
@@ -24,6 +28,10 @@ with
         browserOptions = [||]
         browserDriverDir = "/drivers"
         nugetPackages = [||]
+        logDirName = "logs"
+        logDirPath = DirectoryInfo(".").FullName
+        rollingSize = 10
+        logFormat = "unstructured"
     }
 
 type DirectoryConfiguration = {
@@ -46,8 +54,8 @@ type TransactionConfiguration = {
 
 module BaseConfiguration = 
     /// default configuration location information. Still subject to location/naming change at this time
-    let defaultBaseConfigurationDir = __SOURCE_DIRECTORY__
-    let defaultBaseConfigurationFilePath = defaultBaseConfigurationDir + "/conf.json"
+    let defaultBaseConfigurationDir = DirectoryInfo(".").FullName
+    let defaultBaseConfigurationFilePath = defaultBaseConfigurationDir + "/settings.json"
     
     /// this decodes configuration file json to the BaseConfiguration record type. returns a Decoder which 
     /// when used with Decode.fromString and a string of json, will return a Result of either BaseConfiguration or 
@@ -61,6 +69,10 @@ module BaseConfiguration =
                 browserOptions = get.Required.Field "browserOptions" (Decode.array Decode.string)
                 browserDriverDir = get.Required.Field "browserDriverDir" Decode.string
                 nugetPackages = get.Required.Field "nugetPackages" (Decode.array Decode.string)
+                logDirName = get.Required.Field "logDirName" Decode.string
+                logDirPath = get.Required.Field "logDirPath" Decode.string
+                rollingSize = get.Required.Field "rollingSize" Decode.int
+                logFormat = get.Required.Field "logFormat" Decode.string
             }
         )    
     
@@ -68,11 +80,23 @@ module BaseConfiguration =
     /// is not found or improperly formatted 
     let defaultConfig: BaseConfiguration = BaseConfiguration.Default
 
+    // @chase if we set this up to have some kind of handler or callback we can tell the user whether they are 
+    // using the defaults or their own set up.  in the the configuration is shown so it can be inferred however that 
+    // may not be desired.
+    /// TODO: Fix this method it throws exceptions still
+    /// 
     /// takes in a filepath to a base conf file as filepath param. at this time all fields are required 
     /// returns either the configuration read from file or default configuration defined in Default method ^
+    /// 
     let readFromFileOrDefault (filepath:string) = 
-            match File.ReadAllText(filepath) |> Decode.fromString decoder with 
-                | Ok r -> r
-                | Error err -> 
-                    printfn "[Configurator.ReadInFileConf]:  %s" err
-                    defaultConfig
+        if File.Exists(filepath) then 
+            (
+                match File.ReadAllText(filepath) |> Decode.fromString decoder with
+                    | Ok config -> config
+                    | Error msg -> 
+                        printfn "%s" msg 
+                        BaseConfiguration.Default
+            )
+        else 
+            BaseConfiguration.Default
+                
