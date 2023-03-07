@@ -19,6 +19,7 @@ type BaseConfiguration = {
     logDirPath: string;
     rollingSize: int;
     logFormat: string;
+    loggingLevel: int;
 }
 with
     static member Default = {
@@ -32,6 +33,7 @@ with
         logDirPath = DirectoryInfo(".").FullName
         rollingSize = 10
         logFormat = "unstructured"
+        loggingLevel = 3
     }
 
 type DirectoryConfiguration = {
@@ -73,6 +75,7 @@ module BaseConfiguration =
                 logDirPath = get.Required.Field "logDirPath" Decode.string
                 rollingSize = get.Required.Field "rollingSize" Decode.int
                 logFormat = get.Required.Field "logFormat" Decode.string
+                loggingLevel = get.Required.Field "loggingLevel" Decode.int
             }
         )    
     
