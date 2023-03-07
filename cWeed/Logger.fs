@@ -1,96 +1,37 @@
-(* Notes for me
-
-LogEntry formats as follows: 
-
-in json fmt
-{
-     "timestamp": "2021-08-08 18:04:14.721", // example timestamp 
-     "level": "INFO" // TODO: discuss log levels with chase to find out whats needed 
-     "logger": "main" // This is the entity doing the logging  
-     "message": "this is the actual log message we got"
-}
-
-in unstructured fmt
-"2021-08-08 18:04:14.721 [INFO] Module.MethodName 'hello from logger'"
-
-----------------------------------------------------------
-
-Logger responsibilities:
-
-- read in log settings file and override defaults with 
-  settings provided
-    - read in settings from json
-
-- settings 
-    - Manage Log Format (unstructured || json)
-        - default is unstructured
-    - Manage time format (system || zulu)
-        - default is system time
-    - LogDirectoryLocation (string filepath)
-    - rollAt: (int size <in MB>) default ~10MB
-
-- create LogEntry records that express logged events 
-
-- Manage a Queue of LogEntry
-    - hold LogEntry records that have not yet been logged to 
-      a file 
-    - remove records that have been logged out from the queue
-    - should be FIFO priority
-
-- Create Log Directory if !Exists else use existing dir
-
-- Create Log Files that hold logged events in format specified
-    - format for unstructured:
-        - each line represents one entry 
-    - format for json: 
-        - each file is array of LogEntry json objs [{LogEntry}, {LogEntry} ...]
-
-- Roll Logs with timestamps for easy querying by end user 
-    - roll timestamps precision to the second
-        - formatting
-            - the current log file looks like 
-                ApplicationName.log
-                ApplicationName.log.json
-            - after a roll it will look like
-                ApplicationName_{firsttimestamp}_{lasttimestamp}.log
-                ApplicationName_{firsttimestamp}_{lasttimestamp}.log.json
-
-------------------------------------------------------------
-
-TASKS:
-
-[x] data LogLevel (option)
-[x] data LogEntry (record)
-[x] data LoggerSettings (record)
-[x] data LogEntryQueue (Queue)
+(* 
+    MVP Tasks: 
+    [x] data LogLevel (option)
+    [x] data LogEntry (record)
+    [x] data LoggerSettings (record)
+    [x] data LogEntryQueue (Queue)
 
 
-[x] create LoggerSettings record
-    [x] method ReadSettingsFromFile (string filepath)
-    [x] create LoggerSettings record and populate with user 
-        settings || defaults if applicable
+    [x] create LoggerSettings record
+        [x] method ReadSettingsFromFile (string filepath)
+        [x] create LoggerSettings record and populate with user 
+            settings || defaults if applicable
 
-[/] create Logger module
-    [x] hold current LoggerSettings record 
-    [x] check if log directory exists in LogDirectoryLocation and 
-        create if !Exists using location and name specified in settings
-    [x] hold CurrentLogFilePath (string) 
-    [x] hold LogEntryQueue
-    [/] LogEntryQueue management 
-        [x] queue a log entry 
-        [_] try dequeuing a log entry #figure out how to fail this..
-    [x] method WriteLog level callerMethod msg
-
-    These are built but need to be tested 
-    [/] method RollLogFile  
-    [/] handle roll the logs when the log file reaches ~10MB
-        [/] rename the current log file to specified fmt ^ 
-        [/] create a new log file with naming convention ^
-
-
-NON MVP Tasks: 
-[ ] fix settings file to have optional fields and instead compose with defaults for whatever is not 
-    present
+    [x] create Logger module
+        [x] Logger only Writes logs at or above specified logging level in configuration
+        [x] hold current LoggerSettings record 
+        [x] check if log directory exists in LogDirectoryLocation and 
+            create if !Exists using location and name specified in settings
+        [x] hold CurrentLogFilePath (string) 
+        [x] hold LogEntryQueue
+        [x] LogEntryQueue management 
+            [x] queue a log entry 
+            [x] try dequeuing a log entry #figure out how to fail this..
+        [x] method WriteLog level callerMethod msg
+        [x] method RollLogFile  
+        [x] handle roll the logs when the log file reaches ~10MB
+            [x] rename the current log file to specified fmt ^ 
+            [x] create a new log file with naming convention ^
+    
+    NON MVP Tasks: 
+        [ ] handling logger queue failure
+        [ ] json log files are arrays of json instead of line by line entries with no commas that aren't 
+            parsable in a standard way.
+        [ ] logging support for zulu time
 *)
 module Logger
 
@@ -125,6 +66,20 @@ type LogLevel =
 
 /// this type describes the log structure and has methods to 
 /// convert the union to and from strings 
+/// 
+/// LogEntry formats as follows: 
+///
+/// in json fmt
+/// - {
+///     "timestamp": "yyyyMMdd_HHmmss.fff", // example timestamp fmt 
+///     "level": "INFO" // TODO: discuss log levels with chase to find out whats needed 
+///     "logger": "main" // This is the entity doing the logging  
+///     "message": "this is the actual log message we got"
+/// }
+///
+/// in unstructured fmt:
+/// - "yyyyMMdd_HHmmss.fff [LOGLEVEL] Module.MethodName 'logged message'"
+/// - "20210808_180414.721 [INFO] Module.MethodName 'hello from logger'"
 type LogFormat = 
     | Json
     | Unstructured 
@@ -153,6 +108,7 @@ with
 /// represents a single log.  All logs written are first created
 /// as this type and the methods on this type format the Log entry 
 /// accordingly
+
 type LogEntry = {
         //TODO: use actual DateTime here
         timestamp: string; //2021-08-08 18:04:14.721 example fmt
