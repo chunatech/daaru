@@ -1,3 +1,14 @@
+(*
+    Tasks: 
+
+    [_] optional fields allowed on configs 
+    [_] readFromFile callback for logging/error handling in main
+
+    considerations on optional fields [discussion needed]
+    - which fields should be optional? 
+    - handle optionial fields pre mvp?
+    - adding 'localPacakges' member/fields. 
+*)
 module Configuration
 
 open System.IO
@@ -7,7 +18,6 @@ open Thoth.Json.Net
 /// which directories to watch, packages to use, browser to use, options to set and is the default 
 /// setup for everything within watched directories unless otherwise specified with a directory 
 /// specific configuration setup 
-/// TODO: Chase and Tina discuss adding 'localPacakges' member/field.
 type BaseConfiguration = {
     scriptDirectories: string array 
     pollingInterval: int 
@@ -57,7 +67,7 @@ type TransactionConfiguration = {
 module BaseConfiguration = 
     /// default configuration location information. Still subject to location/naming change at this time
     let defaultBaseConfigurationDir = DirectoryInfo(".").FullName
-    let defaultBaseConfigurationFilePath = defaultBaseConfigurationDir + "/settings.json"
+    let defaultBaseConfigurationFilePath = defaultBaseConfigurationDir + "/settings.cweed.json"
     
     /// this decodes configuration file json to the BaseConfiguration record type. returns a Decoder which 
     /// when used with Decode.fromString and a string of json, will return a Result of either BaseConfiguration or 
@@ -83,21 +93,18 @@ module BaseConfiguration =
     /// is not found or improperly formatted 
     let defaultConfig: BaseConfiguration = BaseConfiguration.Default
 
-    // @chase if we set this up to have some kind of handler or callback we can tell the user whether they are 
-    // using the defaults or their own set up.  in the the configuration is shown so it can be inferred however that 
-    // may not be desired.
-    /// TODO: Fix this method it throws exceptions still
-    /// 
+
     /// takes in a filepath to a base conf file as filepath param. at this time all fields are required 
     /// returns either the configuration read from file or default configuration defined in Default method ^
-    /// 
     let readFromFileOrDefault (filepath:string) = 
         if File.Exists(filepath) then 
             (
                 match File.ReadAllText(filepath) |> Decode.fromString decoder with
                     | Ok config -> config
                     | Error msg -> 
-                        printfn "%s" msg 
+                        // TODO: this needs to be logged out at ERROR level by a handler since
+                        // it is in a step pre-logger initilization
+                        printfn "%s" msg
                         BaseConfiguration.Default
             )
         else 
