@@ -66,8 +66,9 @@ type TransactionConfiguration = {
 
 module BaseConfiguration = 
     /// default configuration location information. Still subject to location/naming change at this time
-    let defaultBaseConfigurationDir = DirectoryInfo(".").FullName
-    let defaultBaseConfigurationFilePath = defaultBaseConfigurationDir + "/settings.cweed.json"
+    // let defaultBaseConfigurationDir = DirectoryInfo(".").FullName
+    let defaultBaseConfigurationDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)
+    let defaultBaseConfigurationFilePath = Path.Join(defaultBaseConfigurationDir, "settings.cweed.json")
     
     /// this decodes configuration file json to the BaseConfiguration record type. returns a Decoder which 
     /// when used with Decode.fromString and a string of json, will return a Result of either BaseConfiguration or 
@@ -96,7 +97,8 @@ module BaseConfiguration =
 
     /// takes in a filepath to a base conf file as filepath param. at this time all fields are required 
     /// returns either the configuration read from file or default configuration defined in Default method ^
-    let readFromFileOrDefault (filepath:string) = 
+    let readFromFileOrDefault (filepath:string) =
+        printfn "default base conf dir: %A" defaultBaseConfigurationDir 
         if File.Exists(filepath) then 
             (
                 match File.ReadAllText(filepath) |> Decode.fromString decoder with
