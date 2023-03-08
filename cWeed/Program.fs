@@ -7,7 +7,9 @@
 // http://kcieslak.io/Dynamically-extending-F-applications
 // https://fsharp.github.io/fsharp-compiler-docs/fcs/interactive.html
 
+open System
 open System.IO
+open System.Timers
 open System.Diagnostics
 open System.Threading.Tasks
 
@@ -21,6 +23,33 @@ open CWeedTransactions
 let maxThreadCount: int32 = 1
 let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/fsiStandalone"
 // letBaseConfigLocation: string ""
+
+let checkTransactionQueue source (e: ElapsedEventArgs) =
+    let transactions: Transaction list = Register.get ()
+    let needToRun: Transaction list = transactions |> List.filter (fun (x: Transaction) -> x.LastRunTime.AddMinutes(x.Configuration.pollingInterval) <= DateTime.Now)
+    
+    // TODO: Add transactions from needToRun to the RunQueue here
+    
+
+    // TODO: Move below logic to RunQueue processing function after building RunQueue
+    let fsiFi: FileInfo = FileInfo(fsiSaLocation)
+
+    let tTask (transaction: Transaction) =
+        let scriptPath: string = transaction.Configuration.scriptPath
+        let psi: ProcessStartInfo = new ProcessStartInfo(fsiFi.FullName, $"%s{scriptPath}")
+        psi.UseShellExecute <- false
+
+        task {
+            let p: Process = new Process()
+            p.StartInfo <- psi
+            p.EnableRaisingEvents <- true
+            // p.Exited += EventHandler
+            p.Start() |> ignore
+        }
+
+    for t: Transaction in needToRun do
+        tTask t |> ignore
+    ()
 
 
 [<EntryPoint>]
@@ -62,40 +91,28 @@ let main (argv: string[]) =
 
     WriteLog LogLevel.INFO this $"cWeed has started and is running from {curDirInfo.FullName}"
 
+    // Start Timer instance, on elapsed iterate over the process
+    // queue and start any transactions that need to run
+    let processTimer: Timer = new Timer()
+    processTimer.Interval <- 60_000  // 60 seconds
+    processTimer.AutoReset <- true
+    processTimer.Elapsed.AddHandler checkTransactionQueue
+    processTimer.Start()
+
     // Iterate over each file record in Register once a minute.
     // For any without a thread running, start thread on polling cycle
-    let lastLoopTime: int32 = 0
     while true do
-        let input: string = System.Console.ReadLine ()
-        let lst: Transaction list = Register.get ()
+        ()
+        
 
-        let res: Transaction = (lst |> List.filter (fun (x: Transaction) -> 
-            x.Configuration.scriptPath.EndsWith input)) |> List.head
-        let fsiFi: FileInfo = FileInfo(fsiSaLocation)
+        
 
-        // once a minute:
-        //  check the run queue
+        // Start a timer that once a minute:
+        //  checks the run queue
         //  if the run queue still has unprocessed items, log a warning or error
         //  check the transaction register for transactions that need to start
         //    (meaning that  last run time + poll time is the greater or equal to the current time)
         //  enqueue any transactions that need to start to the run queue
         //  wait 60 seconds
-
-        let testTask (transaction: Transaction) =
-            let scriptPath: string = transaction.Configuration.scriptPath
-            let psi: ProcessStartInfo = new ProcessStartInfo(fsiFi.FullName, $"%s{scriptPath}")
-            psi.UseShellExecute <- false
-
-            task {
-                let p: Process = new Process()
-                p.StartInfo <- psi
-                p.EnableRaisingEvents <- true
-                // p.Exited += EventHandler
-                p.Start() |> ignore
-            }
-
-        let task1: Task<unit> = testTask res
-        task1.Wait()
-        printfn "Result: %A" res
 
     0 // return an integer exit code
