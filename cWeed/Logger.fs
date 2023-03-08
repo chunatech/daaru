@@ -249,7 +249,7 @@ let ProcessQueue () =
             | (true, entry) -> 
                 if IsRollSize () then 
                     RollLogFile ()
-                entry.PrintToConsole LogFormat.Unstructured
+                //entry.PrintToConsole LogFormat.Unstructured
                 WriteLogEntryToFile entry 
             // TODO: Handle this better 
             | _ -> 
@@ -262,6 +262,23 @@ let WriteLog (level:LogLevel) callerMethod msg =
     if (int level) >= (int settings.loggingLevel) then
         let entry = LogEntry.Create level callerMethod msg
         LogEntryQueue.Enqueue entry
+    else 
+        ()
+    // this will process either way as the logger itself queues items
+    // directly in certain scenarios
+    ProcessQueue ()
+
+
+
+/// writes a log to the logfile specified by configuraiton and 
+/// only if the level specified for the log is >= the loggingLevel
+/// field in the configuration (set to Error by default) 
+/// prints the log to the console
+let WriteLogAndPrintToConsole (level:LogLevel) callerMethod msg =  
+    if (int level) >= (int settings.loggingLevel) then
+        let entry = LogEntry.Create level callerMethod msg
+        LogEntryQueue.Enqueue entry
+        entry.PrintToConsole LogFormat.Unstructured
     else 
         ()
     // this will process either way as the logger itself queues items
