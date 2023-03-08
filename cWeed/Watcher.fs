@@ -3,6 +3,16 @@ module Watcher
 
 open System.IO
 open Configuration
+open TransactionComposer
+open Logger
+
+
+
+let mutable config = BaseConfiguration.Default
+
+let Init conf = 
+    config <- conf
+
 
 let create (filter: string) addCb rmCb updateCb (dir: string) =
     if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore
@@ -27,9 +37,11 @@ let remove (path: string) =
 
 
 let add (path: string) =
-    printfn "%s added" path
+    let this = System.Reflection.MethodBase.GetCurrentMethod()
+    let msg = "added" + path
+    WriteLogAndPrintToConsole LogLevel.INFO this msg 
     // let ext = FileInfo(path).Extension
-    let dirConfig: BaseConfiguration = BaseConfiguration.defaultConfig
+    let dirConfig: BaseConfiguration = config
     let config: TransactionConfiguration = {
         scriptPath = path
         pollingInterval = dirConfig.pollingInterval
@@ -40,10 +52,13 @@ let add (path: string) =
     }
 
     Register.add (config)
+    ComposeTransaction config
 
 
 let update (path: string) =
-    printfn "%s added or updated" path
+    let this = System.Reflection.MethodBase.GetCurrentMethod()
+    let msg = $"added or updated {path}" 
+    WriteLogAndPrintToConsole LogLevel.INFO this msg 
 
 
 let createForDirs (dirArr: string array) =
@@ -56,12 +71,16 @@ let createForDirs (dirArr: string array) =
 
 
 let registerExistingScripts (confDirs: string array) =
+    let this = System.Reflection.MethodBase.GetCurrentMethod()
     let mutable scriptPaths: string array = [||]
     for dir: string in confDirs do
-        printfn "%s" dir
+        
+        WriteLogAndPrintToConsole LogLevel.INFO this $"registering directory {dir}"
+        
         let dirInfo: DirectoryInfo = DirectoryInfo(dir)
         let cwtScripts: FileInfo array = dirInfo.GetFiles("*.cwt", SearchOption.AllDirectories)
         let fsxScripts: FileInfo array = dirInfo.GetFiles("*.fsx", SearchOption.AllDirectories)
+        
         scriptPaths <- Array.append (cwtScripts |> Array.map(fun (fi: FileInfo) -> fi.FullName)) scriptPaths
         scriptPaths <- Array.append (fsxScripts |> Array.map(fun (fi: FileInfo) -> fi.FullName)) scriptPaths
     

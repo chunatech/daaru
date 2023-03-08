@@ -36,6 +36,9 @@ let main (argv: string[]) =
     let loggerSettings = 
         LoggerSettings.Create (Path.Join(config.logDirPath, config.logDirName)) config.rollingSize config.logFormat config.loggingLevel
     
+    
+    Watcher.Init(config)
+
 
     // call the loggers initialization method
     InitLogger(loggerSettings)
