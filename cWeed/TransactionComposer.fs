@@ -128,6 +128,9 @@ let buildHeader config =
     ])
 
 
+// @tina, this function below needs to be adjusted to write the file to a 
+// staging dir, instead of the script dir.
+
 /// retrieves the content from the cwt file and stitches together an fsx file of the same name in the format  
 /// of a canopy test, then writes the file to the configured script location
 let buildTestFile (config: TransactionConfiguration) = 
@@ -173,6 +176,9 @@ let ProcessCwt config =
     buildTestFile config
     ()
 
+
+// @tina, this function below needs to copy the .fsx file to the staging dir
+
 /// validate fsx file with fsi and pass it along 
 let ProcessFsx config = 
     let this = MethodBase.GetCurrentMethod()
@@ -181,7 +187,6 @@ let ProcessFsx config =
     // if the script is an fsx, we can start the process from the fsi fwd 
     WriteLog LogLevel.DEBUG this $"method not implemented yet.. doing nothing with this value {config}"
     ()
-
 
 
 

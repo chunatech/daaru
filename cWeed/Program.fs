@@ -102,7 +102,7 @@ let main (argv: string[]) =
     // Iterate over each file record in Register once a minute.
     // For any without a thread running, start thread on polling cycle
     while true do
-        ()
+        Threading.Thread.Sleep(1000)
         
 
         

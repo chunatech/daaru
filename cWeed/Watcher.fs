@@ -6,7 +6,18 @@ open Configuration
 open TransactionComposer
 open Logger
 
+// TODO: Need to create alternate callback functions for handing the running and registering
+// registering of .fsx scripts, both constructed and accepted.
 
+// TODO: Need to build alternate watcher creation function to create a watcher for the 
+// staging and authorized directories.
+//   -- Staging watcher will check for secure mode.  If secure, will do nothing.
+//      if not secure, then will add files in staging directory to register.async
+//
+//   -- Authorized dir watcher will validate that any changes files match their
+//      profile stored in the .authorized file.  If they match, add to register.
+//      If match fails, write critical log entry, and send event through eventing
+//      source, if configured, then delete file.
 
 let mutable config = BaseConfiguration.Default
 
@@ -70,6 +81,8 @@ let createForDirs (dirArr: string array) =
     watcherArr
 
 
+// TODO: Need to enhance this method to check if secure mode is enabled.  If so
+//       it needs to also check the .authorized directory.
 let registerExistingScripts (confDirs: string array) =
     let this = System.Reflection.MethodBase.GetCurrentMethod()
     let mutable scriptPaths: string array = [||]
