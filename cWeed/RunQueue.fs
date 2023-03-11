@@ -25,7 +25,7 @@ with
             runTimer = new Timer(60_000)
             threadTracker = threadCount |> fun (tc: int32) ->
                 let cq: ConcurrentQueue<int32> = ConcurrentQueue<int32>()
-                for t=0 to tc do
+                for t=1 to tc do  // for x to y range is inclusive
                     cq.Enqueue t
                 cq
         }
@@ -43,16 +43,19 @@ with
             this.queue.Enqueue t
         ()
 
-    member private this.handleTransactionProcessExit (t: Transaction) (e: EventArgs) =
-        
+    member private this.handleTransactionProcessExit (t: Transaction) (threadId : int32) (e: EventArgs) =
+        // TODO: Build out logic here to handle result state (Pass/Fail, etc..)
+        this.threadTracker.Enqueue threadId
         printfn $"%s{t.Configuration.scriptPath} process exited: %s{DateTime.Now.ToString()}"
 
     member private this.handleTransactionOutput (t: Transaction) (e: DataReceivedEventArgs) =
+        // TODO: Build out logic here to handle successful results parsing
         if String.IsNullOrEmpty(e.Data) |> not then
             printfn $"Output received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
         ()
 
     member private this.handleTransactionError (t: Transaction) (e: DataReceivedEventArgs) =
+        // TODO: Build out logic here for error/failure parsing and handling
         if String.IsNullOrEmpty(e.Data) |> not then
             printfn $"Error received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
         ()
@@ -62,28 +65,32 @@ with
             //printfn "No transactions to run..."
             ()
         else
-            // TODO: This is probably unsafe, come back and fix it.
-            let t: Transaction = this.queue.TryDequeue() |> snd
+            if this.threadTracker.TryPeek() |> fst |> not then
+                printfn "No threads available to run transaction..."
+                ()
+            else
+                // TODO: This is probably unsafe, come back and fix it, if needed.
+                let t: Transaction = this.queue.TryDequeue() |> snd
+                let threadId: int32 = this.threadTracker.TryDequeue() |> snd
 
-            printfn $"%s{t.Configuration.scriptPath} last ran at: %s{t.LastRunTime.ToString()}"
-            t.LastRunTime <- DateTime.Now
-            Register.update t
-            printfn $"%s{t.Configuration.scriptPath} starting at: %s{t.LastRunTime.ToString()}"
+                printfn $"%s{t.Configuration.scriptPath} last ran at: %s{t.LastRunTime.ToString()}"
+                t.LastRunTime <- DateTime.Now
+                Register.update t
+                printfn $"%s{t.Configuration.scriptPath} starting at: %s{t.LastRunTime.ToString()}"
 
-            let psi: ProcessStartInfo = new ProcessStartInfo(this.fsiPath, $"%s{t.Configuration.scriptPath}")
-            psi.UseShellExecute <- false
-            psi.RedirectStandardOutput <- true
-            psi.RedirectStandardError <- true
-            
-            let p: Process = new Process()
-            p.StartInfo <- psi
-            p.EnableRaisingEvents <- true
-            p.Exited.Add (this.handleTransactionProcessExit t)
-            p.OutputDataReceived.Add (this.handleTransactionOutput t)
-            p.ErrorDataReceived.Add (this.handleTransactionError t)
-            p.Start() |> ignore
-            p.BeginOutputReadLine()
-            p.BeginErrorReadLine()
-            // p.WaitForExit()
+                let psi: ProcessStartInfo = new ProcessStartInfo(this.fsiPath, $"%s{t.Configuration.scriptPath}")
+                psi.UseShellExecute <- false
+                psi.RedirectStandardOutput <- true
+                psi.RedirectStandardError <- true
+                
+                let p: Process = new Process()
+                p.StartInfo <- psi
+                p.EnableRaisingEvents <- true
+                p.Exited.Add (this.handleTransactionProcessExit t threadId)
+                p.OutputDataReceived.Add (this.handleTransactionOutput t)
+                p.ErrorDataReceived.Add (this.handleTransactionError t)
+                p.Start() |> ignore
+                p.BeginOutputReadLine()
+                p.BeginErrorReadLine()
                 
 

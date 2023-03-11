@@ -13,7 +13,7 @@ open RunQueue
 open Configuration
 
 // Set internal global variables
-let maxThreadCount: int32 = 4
+let maxThreadCount: int32 = 2
 let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/fsiStandalone"
 // letBaseConfigLocation: string ""
 
@@ -55,7 +55,7 @@ let main (argv: string[]) =
 
     // Initialize thread tracker and populate it
     let fsiFi: FileInfo = FileInfo(fsiSaLocation)
-    let runner: TransactionRunner = TransactionRunner.init fsiFi.FullName maxThreadCount 
+    let runner: TransactionRunner = TransactionRunner.init fsiFi.FullName maxThreadCount
     
     while true do
         Threading.Thread.Sleep(100)
