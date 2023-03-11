@@ -11,6 +11,7 @@
     <Compile Include="Register.fs" />
     <Compile Include="TransactionComposer.fs" />
     <Compile Include="Watcher.fs" />
+    <Compile Include="RunQueue.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

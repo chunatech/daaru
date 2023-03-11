@@ -6,10 +6,10 @@ open Configuration
 
 type Transaction = {
     Configuration: TransactionConfiguration
-    LastRunTime: DateTime
-    LastSuccess: DateTime
-    LastFailure: DateTime
-    ConsecutiveRunCount: Int32
+    mutable LastRunTime: DateTime
+    mutable LastSuccess: DateTime
+    mutable LastFailure: DateTime
+    mutable ConsecutiveRunCount: Int32
 }
 with
     static member Create (tc: TransactionConfiguration) =
