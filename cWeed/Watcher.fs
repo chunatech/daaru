@@ -19,9 +19,9 @@ open Logger
 //      If match fails, write critical log entry, and send event through eventing
 //      source, if configured, then delete file.
 
-let mutable config = BaseConfiguration.Default
+let mutable config: BaseConfiguration = BaseConfiguration.Default
 
-let Init conf = 
+let Init (conf: BaseConfiguration) = 
     config <- conf
 
 
@@ -48,8 +48,8 @@ let remove (path: string) =
 
 
 let add (path: string) =
-    let this = System.Reflection.MethodBase.GetCurrentMethod()
-    let msg = "added" + path
+    let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
+    let msg: string = "added" + path
     WriteLogAndPrintToConsole LogLevel.INFO this msg 
     // let ext = FileInfo(path).Extension
     let dirConfig: BaseConfiguration = config
@@ -67,8 +67,8 @@ let add (path: string) =
 
 
 let update (path: string) =
-    let this = System.Reflection.MethodBase.GetCurrentMethod()
-    let msg = $"added or updated {path}" 
+    let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
+    let msg: string = $"added or updated {path}" 
     WriteLogAndPrintToConsole LogLevel.INFO this msg 
 
 
@@ -84,7 +84,7 @@ let createForDirs (dirArr: string array) =
 // TODO: Need to enhance this method to check if secure mode is enabled.  If so
 //       it needs to also check the .authorized directory.
 let registerExistingScripts (confDirs: string array) =
-    let this = System.Reflection.MethodBase.GetCurrentMethod()
+    let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
     let mutable scriptPaths: string array = [||]
     for dir: string in confDirs do
         

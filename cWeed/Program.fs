@@ -58,7 +58,7 @@ let main (argv: string[]) =
     let runner: TransactionRunner = TransactionRunner.init fsiFi.FullName maxThreadCount 
     
     while true do
-        Threading.Thread.Sleep(5000)
+        Threading.Thread.Sleep(100)
         
         runner.runTransactions ()
 
