@@ -2,38 +2,28 @@ module Watcher
 // Filtered watcher of filesystem, to look for any new .cwt or .fsx files, then take action on them.
 
 open System.IO
-open Configuration
-open TransactionComposer
+
 open Logger
-
-// TODO: Need to create alternate callback functions for handing the running and registering
-// registering of .fsx scripts, both constructed and accepted.
-
-// TODO: Need to build alternate watcher creation function to create a watcher for the 
-// staging and authorized directories.
-//   -- Staging watcher will check for secure mode.  If secure, will do nothing.
-//      if not secure, then will add files in staging directory to register.async
-//
-//   -- Authorized dir watcher will validate that any changes files match their
-//      profile stored in the .authorized file.  If they match, add to register.
-//      If match fails, write critical log entry, and send event through eventing
-//      source, if configured, then delete file.
-
-let mutable config: BaseConfiguration = BaseConfiguration.Default
-
-let Init (conf: BaseConfiguration) = 
-    config <- conf
+open Configuration
+open CWeedTransactions
+open TransactionComposer
 
 
-let create (filter: string) addCb rmCb updateCb (dir: string) =
+type WatcherType =
+    | Source
+    | Staging
+
+
+
+let create (filter: string) addCb removeCb updateCb (dir: string) =
     if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore
     let watcher: FileSystemWatcher = new FileSystemWatcher()
     watcher.Filter <- filter
     watcher.Path <- dir
-    watcher.Created.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> addCb)
-    watcher.Deleted.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> rmCb)
-    watcher.Renamed.Add (fun (n: RenamedEventArgs) -> n.OldFullPath |> rmCb; n.FullPath |> addCb)
-    // watcher.Changed.Add (fun (n: FileSystemEventArgs) -> n.FullPath |> updateCb)
+    watcher.Created.Add (fun (n: FileSystemEventArgs) -> FileInfo(n.FullPath).FullName |> addCb)
+    watcher.Deleted.Add (fun (n: FileSystemEventArgs) -> FileInfo(n.FullPath).FullName |> removeCb)
+    watcher.Renamed.Add (fun (n: RenamedEventArgs) -> FileInfo(n.OldFullPath).FullName |> removeCb; FileInfo(n.FullPath).FullName |> addCb)
+    watcher.Changed.Add (fun (n: FileSystemEventArgs) -> FileInfo(n.FullPath).FullName |> updateCb)
     watcher.SynchronizingObject <- null
     watcher.EnableRaisingEvents <- true
     watcher.IncludeSubdirectories <- true
@@ -42,42 +32,62 @@ let create (filter: string) addCb rmCb updateCb (dir: string) =
 
 
 let remove (path: string) =
-    printfn "%s removed" path
-    // let fn = Path.GetFileNameWithoutExtension path
-    Register.remove path
+    let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
+    let mutable msg: string = ""
+    match (Register.get path) with
+    | Some (t: Transaction) ->
+        Register.remove t.Configuration.scriptPath
+        msg <- "staged transaction removed " + t.Configuration.stagedScriptPath
+        File.Delete t.Configuration.stagedScriptPath
+    | None ->
+        msg <- "no transaction to remove at " + path
+    WriteLogAndPrintToConsole LogLevel.INFO this msg
+
 
 
 let add (path: string) =
     let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
-    let msg: string = "added" + path
-    WriteLogAndPrintToConsole LogLevel.INFO this msg 
-    // let ext = FileInfo(path).Extension
-    let dirConfig: BaseConfiguration = config
-    let config: TransactionConfiguration = {
-        scriptPath = path
-        pollingInterval = dirConfig.pollingInterval
-        browser = dirConfig.browser
-        browserOptions = dirConfig.browserOptions
-        browserDriverDir = dirConfig.browserDriverDir
-        nugetPackages = dirConfig.nugetPackages
-    }
+    let mutable msg: string = ""
 
-    Register.add (config)
-    ComposeTransaction config
+    match ComposeTransaction path with
+    | Some (tc: TransactionConfiguration) ->
+        Register.add tc
+        msg <- $"added %s{path}"
+    | None -> 
+        msg <- $"unable to add %s{path}"
+        ()
+
+    WriteLogAndPrintToConsole LogLevel.INFO this msg 
 
 
 let update (path: string) =
+    // TODO:  Make this method check hash of staged file against source file
+    //        Do nothing if they are the same
     let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
-    let msg: string = $"added or updated {path}" 
-    WriteLogAndPrintToConsole LogLevel.INFO this msg 
+    let msg: string = $"updated {path}" 
+    WriteLogAndPrintToConsole LogLevel.INFO this msg
 
 
-let createForDirs (dirArr: string array) =
+let validateFsx (path: string) =
+    // TODO: Build out logic to have staged .fsx files validated
+    let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
+    let msg: string = $"validating {path}" 
+    WriteLogAndPrintToConsole LogLevel.INFO this msg
+
+
+let createForDirs (watcherType: WatcherType) (dirArr: string array) =
     let mutable watcherArr: FileSystemWatcher array = [||]
-    for dir: string in dirArr do
-        watcherArr <- Array.append [|create "*.cwt" add remove update dir|] watcherArr
-        watcherArr <- Array.append [|create "*.fsx" add remove update dir|] watcherArr
-        ()
+    match watcherType with
+    | Source ->
+        for dir: string in dirArr do
+            watcherArr <- Array.append [|create "*.cwt" add remove update dir|] watcherArr
+            watcherArr <- Array.append [|create "*.fsx" add remove update dir|] watcherArr
+            ()
+    | Staging ->
+        for dir: string in dirArr do
+            watcherArr <- Array.append [|create "*.fsx" validateFsx (fun _ -> ()) validateFsx dir|] watcherArr
+            ()
+
     watcherArr
 
 

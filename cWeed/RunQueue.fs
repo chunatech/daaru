@@ -35,7 +35,7 @@ with
         tr
 
     member this.checkTransactionQueue source (e: ElapsedEventArgs) =
-        let transactions: Transaction list = Register.get ()
+        let transactions: Transaction list = Register.getAll ()
         let needToRun: Transaction list = transactions|> List.filter (fun (x: Transaction) -> x.LastRunTime.AddMinutes(x.Configuration.pollingInterval) <= DateTime.Now)
         
         // Add any jobs set to run to the run queue
@@ -78,7 +78,7 @@ with
                 Register.update t
                 printfn $"%s{t.Configuration.scriptPath} starting at: %s{t.LastRunTime.ToString()}"
 
-                let psi: ProcessStartInfo = new ProcessStartInfo(this.fsiPath, $"%s{t.Configuration.scriptPath}")
+                let psi: ProcessStartInfo = new ProcessStartInfo(this.fsiPath, $"%s{t.Configuration.stagedScriptPath}")
                 psi.UseShellExecute <- false
                 psi.RedirectStandardOutput <- true
                 psi.RedirectStandardError <- true

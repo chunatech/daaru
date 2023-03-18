@@ -48,8 +48,18 @@ let remove (scriptPath: string) =
     scriptPath |> Remove |> register.Post
 
 
-let get () =
+let getAll () =
     register.PostAndReply Get
+
+
+// TODO: move the below logic into the Register processing logic itself
+let get (scriptPath: string) =
+    let all: Transaction list = getAll()
+    
+    // here this is the list returned from get all 
+    all |> List.filter (fun (t: Transaction) -> 
+        t.Configuration.scriptPath = scriptPath || t.Configuration.stagedScriptPath = scriptPath
+    ) |> List.tryExactlyOne
 
 
 let update (t: Transaction) =

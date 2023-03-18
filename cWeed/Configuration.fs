@@ -43,7 +43,7 @@ with
         logDirPath = DirectoryInfo(".").FullName
         rollingSize = 10
         logFormat = "unstructured"
-        loggingLevel = 3
+        loggingLevel = 1
     }
 
 type DirectoryConfiguration = {
@@ -56,6 +56,7 @@ type DirectoryConfiguration = {
 
 type TransactionConfiguration = {
     scriptPath: string
+    stagedScriptPath: string
     pollingInterval: int
     browser: string
     browserOptions: string array

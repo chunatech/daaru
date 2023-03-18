@@ -56,15 +56,23 @@ type PkgLocation =
     | Internal
 
 
+let mutable bConfig: BaseConfiguration = BaseConfiguration.Default
+let mutable stagingDir: string = "./staging"
+
+let Init (conf: BaseConfiguration) (stagDir: string) = 
+    bConfig <- conf
+    stagingDir <- stagDir
+
+
 /// required imports at this time
-let _defaultImports = [|
+let _defaultImports: string array = [|
     "#r \"nuget: canopy\""
     "#r \"nuget: Selenium.WebDriver.ChromeDriver\""
 |]
 
 
 /// array containing the default open statements in the "header" section
-let _defaultOpenStmts = [|
+let _defaultOpenStmts: string array = [|
     "open canopy.runner.classic"
     "open canopy.configuration"
     "open canopy.classic"
@@ -78,7 +86,7 @@ let createNugetImportString pkgname=
 /// creates an array of browser options that are added to the browserOptions in selenium/canopy. at 
 /// this time only chrome is supported. 
 let createBrowserOptionsArray (browserOpts: string array) = 
-    browserOpts |> Array.map (fun opt -> $"browserOptions.AddArgument(\"--{opt}\")") 
+    browserOpts |> Array.map (fun (opt: string) -> $"browserOptions.AddArgument(\"--{opt}\")") 
 
 
 /// this returns the composed string that tells canopy/selenium where the chrome driver is located 
@@ -88,16 +96,16 @@ let browserConfiguraitonString browserDir =
 
 /// this composes together all the lines that make up the browser configuration portion of the testfile 
 /// and returns them as an array of strings to be further composed into a testfile
-let headerBrowserConfigurations config = 
-    let chromeDirConfig = [| $"chromeDir <- \"{DirectoryInfo(config.browserDriverDir).FullName}\"" |]
+let headerBrowserConfigurations (config: TransactionConfiguration) = 
+    let chromeDirConfig: string array = [| $"chromeDir <- \"{DirectoryInfo(config.browserDriverDir).FullName}\"" |]
     // browseropts 
-    let browserOptsObj = [| "let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()" |]
-    let opts = createBrowserOptionsArray config.browserOptions
+    let browserOptsObj: string array = [| "let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()" |]
+    let opts: string array = createBrowserOptionsArray config.browserOptions
     // startmode
-    let startMode = "let browserWO: canopy.types.BrowserStartMode =  canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions)"
-    let startCmdString = "start browserWO"
+    let startMode: string = "let browserWO: canopy.types.BrowserStartMode =  canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions)"
+    let startCmdString: string = "start browserWO"
     
-    let startModeSettings = [|
+    let startModeSettings: string array = [|
         startMode
         startCmdString
     |]
@@ -112,14 +120,14 @@ let headerBrowserConfigurations config =
 
 /// this method composes all the lines before the test name and test itself, considered "header" for the purposes 
 /// of this module. returns a string array of those lines
-let buildHeader config = 
+let buildHeader (config: TransactionConfiguration) = 
        // imports 
     let importsFromConfig: string array = config.nugetPackages |> Array.map (fun pkg -> createNugetImportString pkg)
     let imports: string array = Array.distinct (Array.concat [ importsFromConfig; _defaultImports; ])
     // openstmts
     let openStmts: string array = _defaultOpenStmts
     // chromedir 
-    let browserConfigs = headerBrowserConfigurations config 
+    let browserConfigs: string array = headerBrowserConfigurations config 
 
     Array.distinct (Array.concat [
         imports;
@@ -133,26 +141,26 @@ let buildHeader config =
 
 /// retrieves the content from the cwt file and stitches together an fsx file of the same name in the format  
 /// of a canopy test, then writes the file to the configured script location
-let buildTestFile (config: TransactionConfiguration) = 
+let buildTransactionFile (config: TransactionConfiguration) = 
     // compose all the header information using the config given
-    let header = buildHeader config
+    let header: string array = buildHeader config
 
     // name the test after the cwt file
-    let testName = [| $"\"{Path.GetFileNameWithoutExtension(config.scriptPath)}\" &&& fun _ ->" |]
+    let testName: string array = [| $"\"{Path.GetFileNameWithoutExtension(config.scriptPath)}\" &&& fun _ ->" |]
     
     // test content 
-    let content = File.ReadAllLines(config.scriptPath)
+    let content: string array = File.ReadAllLines(config.scriptPath)
 
     // put together the footer here
-    let runStmt = "run()"
-    let quitStmt = "quit(browserWO)"
-    let footer = [|
+    let runStmt: string = "run()"
+    let quitStmt: string = "quit(browserWO)"
+    let footer: string array = [|
         runStmt
         quitStmt
     |]
     
     // put all the pieces together into one string array to be written to file
-    let testFileContent = Array.distinct (Array.concat [
+    let testFileContent: string array = Array.distinct (Array.concat [
         header;
         testName;
         content;
@@ -160,48 +168,72 @@ let buildTestFile (config: TransactionConfiguration) =
     ])
 
     // set up the file name to be the same as the cwt given
-    let dir = Path.GetDirectoryName(config.scriptPath)
-    let testFileName = $"{Path.GetFileNameWithoutExtension(config.scriptPath)}.fsx" 
+    let dir: string = Path.GetDirectoryName(config.scriptPath)
+    let testFileName: string = $"{Path.GetFileNameWithoutExtension(config.scriptPath)}.fsx" 
     
     // write the file and close it
     File.WriteAllLines(Path.Join(dir, testFileName), testFileContent)
     
 
 /// process one cwt file into one fsx file 
-let ProcessCwt config = 
-    let this = MethodBase.GetCurrentMethod()
+let ProcessCwt (config: TransactionConfiguration) = 
+    let this: MethodBase = MethodBase.GetCurrentMethod()
     // assume authorization has been handled at this point 
     // if the script is a cwt, we need compose it into an fsx
     WriteLog LogLevel.DEBUG this $"method not implemented yet.. doing nothing with this value {config}"
-    buildTestFile config
-    ()
+    // TODO:  Adjust to write to staging dir
+    buildTransactionFile config
+    Some(config) // TODO: rework this function to properly check this
 
 
-// @tina, this function below needs to copy the .fsx file to the staging dir
+/// copy fsx to staging dir, and update transaction config with staged path
+let ProcessFsx (config: TransactionConfiguration) = 
+    let this: MethodBase = MethodBase.GetCurrentMethod()
 
-/// validate fsx file with fsi and pass it along 
-let ProcessFsx config = 
-    let this = MethodBase.GetCurrentMethod()
-    
-    // assume authorization has been handled at this point 
-    // if the script is an fsx, we can start the process from the fsi fwd 
-    WriteLog LogLevel.DEBUG this $"method not implemented yet.. doing nothing with this value {config}"
-    ()
+    let stagingDirFullPath: string = DirectoryInfo(stagingDir).FullName
+    let sourcePath: string = FileInfo(config.scriptPath).FullName
+    let sourceScriptDir: option<string> = (bConfig.scriptDirectories 
+        |> Array.filter (fun (csd: string) -> sourcePath.StartsWith(DirectoryInfo(csd).FullName))
+        |> Array.tryExactlyOne)
+
+    match sourceScriptDir with
+    | Some (csdPath: string) ->
+        let stagingFilePath: string = sourcePath.Replace(DirectoryInfo(csdPath).FullName,stagingDirFullPath)
+        let targetStagingDir: string = Path.GetDirectoryName(stagingFilePath)
+        if Directory.Exists targetStagingDir |> not then Directory.CreateDirectory targetStagingDir |> ignore
+        File.Copy(sourcePath, stagingFilePath, true)
+        
+        WriteLog LogLevel.DEBUG this $"copying fsx script to staging location: %s{stagingFilePath}"
+        Some({ config with stagedScriptPath = stagingFilePath })
+    | None ->
+        WriteLog LogLevel.DEBUG this "something has gone terribly wrong, you should not be here"
+        None
 
 
 
 /// this runs from the place where the transaction is received and starts the process for 
 /// handing it off to the fsi
-let ComposeTransaction (config: TransactionConfiguration) = 
-    let this = MethodBase.GetCurrentMethod()
-    if (Path.HasExtension(config.scriptPath) |> not) then 
-        WriteLog LogLevel.WARN this $"{config.scriptPath} has no extension.. this file will not process"
-    else 
-        match Path.GetExtension(config.scriptPath) with 
-            | ".fsx" -> ProcessFsx config 
-            | ".cwt" -> ProcessCwt config 
-            | _ -> 
-                let msg = $"{config.scriptPath} has an unrecognized extenion.. this file will not process"
-                WriteLog LogLevel.WARN this msg
+let ComposeTransaction (path: string) = 
+    let this: MethodBase = MethodBase.GetCurrentMethod()
+
+    // TODO: Build out logic to apply actual directory config, using only default right now
+    let dirConfig: BaseConfiguration = bConfig
+    let tConfig: TransactionConfiguration = {
+        scriptPath = path
+        stagedScriptPath = ""  // script not staged yet
+        pollingInterval = dirConfig.pollingInterval
+        browser = dirConfig.browser
+        browserOptions = dirConfig.browserOptions
+        browserDriverDir = dirConfig.browserDriverDir
+        nugetPackages = dirConfig.nugetPackages
+    }
+
+    match Path.GetExtension(tConfig.scriptPath) with 
+        | ".fsx" -> ProcessFsx tConfig
+        | ".cwt" -> ProcessCwt tConfig
+        | _ -> 
+            let msg = $"{tConfig.scriptPath} has an unrecognized extenion.. this file will not process"
+            WriteLog LogLevel.WARN this msg
+            None
 
 

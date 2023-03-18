@@ -15,6 +15,7 @@ open Configuration
 // Set internal global variables
 let maxThreadCount: int32 = 2
 let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/fsiStandalone"
+let stagingDir: string = "./staging"
 // letBaseConfigLocation: string ""
 
 
@@ -30,13 +31,16 @@ let main (argv: string[]) =
     let loggerSettings: LoggerSettings = 
         LoggerSettings.Create (Path.Join(config.logDirPath, config.logDirName)) config.rollingSize config.logFormat config.loggingLevel
     
-    Watcher.Init(config)
+    TransactionComposer.Init config stagingDir
 
     // call the loggers initialization method
     InitLogger(loggerSettings)
 
     WriteLog LogLevel.INFO this "logger Initialized"
-    WriteLog LogLevel.INFO this $"base configuration was set to {config}"
+    // WriteLog LogLevel.INFO this $"base configuration was set to {config}"
+
+    // clear out existing staged scripts if they exist
+    Directory.Delete(DirectoryInfo(stagingDir).FullName, true)
 
     // find all existing scripts in configured directories and register them
     let existingScripts: string array = Watcher.registerExistingScripts config.scriptDirectories
@@ -44,14 +48,16 @@ let main (argv: string[]) =
 
     // Build .cwt and .fsx watchers for that directory
     // Add watchers to list for tracking and cleanup later
-    let watcherList: FileSystemWatcher array = Watcher.createForDirs config.scriptDirectories
+    let cwtWatcherList: FileSystemWatcher array = 
+        Watcher.createForDirs Watcher.WatcherType.Source config.scriptDirectories
+
+    let stagingFsxWatcherList: FileSystemWatcher array = 
+        Watcher.createForDirs Watcher.WatcherType.Staging [|stagingDir|]
     // TODO: Log out watcherList here
     
     // print running directory to console and log
     let curDirInfo: DirectoryInfo = DirectoryInfo(".")
-    // TODO: Log out current directory path
-
-    WriteLog LogLevel.INFO this $"cWeed has started and is running from {curDirInfo.FullName}"
+    WriteLogAndPrintToConsole LogLevel.INFO this $"cWeed has started and is running from %s{curDirInfo.FullName}"
 
     // Initialize thread tracker and populate it
     let fsiFi: FileInfo = FileInfo(fsiSaLocation)

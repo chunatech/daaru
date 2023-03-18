@@ -3,7 +3,7 @@
 open canopy.runner.classic
 open canopy.configuration
 open canopy.classic
-chromeDir <- "/drivers"
+chromeDir <- "bin/Debug/net6.0/"
 let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()
 let browserWO: canopy.types.BrowserStartMode =  canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions)
 start browserWO

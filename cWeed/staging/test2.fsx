@@ -1,11 +1,12 @@
 #r "nuget: canopy"
 #r "nuget: Selenium.WebDriver.ChromeDriver"
+//#r @"path" // direct path to dll/package
 
 open canopy.runner.classic
 open canopy.configuration
 open canopy.classic
 
-canopy.configuration.chromeDir <- "./bin/Debug/net6.0/"
+canopy.configuration.chromeDir <- "bin/Debug/net6.0/"
 
 //start an instance of selected browser
 let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()
