@@ -13,11 +13,16 @@ open RunQueue
 open Configuration
 
 // Set internal global variables
-let maxThreadCount: int32 = 2
 let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/fsiStandalone"
 let stagingDir: string = "./staging"
 // letBaseConfigLocation: string ""
 
+(*
+    Task List:
+    [] Handle pass and failure states of transactions
+    [] Build out logging more fully
+    [] 
+*)
 
 [<EntryPoint>]
 let main (argv: string[]) =
@@ -44,16 +49,13 @@ let main (argv: string[]) =
 
     // find all existing scripts in configured directories and register them
     let existingScripts: string array = Watcher.registerExistingScripts config.scriptDirectories
-    // TODO: Log out existingScripts here
-
-    // Build .cwt and .fsx watchers for that directory
-    // Add watchers to list for tracking and cleanup later
-    let cwtWatcherList: FileSystemWatcher array = 
+    // set up watchers for configured script directories
+    let sourceWatcherList: FileSystemWatcher array = 
         Watcher.createForDirs Watcher.WatcherType.Source config.scriptDirectories
-
+    // set up watcher for staged script directory
     let stagingFsxWatcherList: FileSystemWatcher array = 
         Watcher.createForDirs Watcher.WatcherType.Staging [|stagingDir|]
-    // TODO: Log out watcherList here
+    // TODO: Log out details from above three variables here
     
     // print running directory to console and log
     let curDirInfo: DirectoryInfo = DirectoryInfo(".")
@@ -61,7 +63,7 @@ let main (argv: string[]) =
 
     // Initialize thread tracker and populate it
     let fsiFi: FileInfo = FileInfo(fsiSaLocation)
-    let runner: TransactionRunner = TransactionRunner.init fsiFi.FullName maxThreadCount
+    let runner: TransactionRunner = TransactionRunner.init fsiFi.FullName config.maxThreadCount
     
     while true do
         Threading.Thread.Sleep(100)

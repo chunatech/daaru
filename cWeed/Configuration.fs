@@ -19,7 +19,8 @@ open Thoth.Json.Net
 /// setup for everything within watched directories unless otherwise specified with a directory 
 /// specific configuration setup 
 type BaseConfiguration = {
-    scriptDirectories: string array 
+    scriptDirectories: string array
+    maxThreadCount: int
     pollingInterval: int 
     browser: string 
     browserOptions: string array 
@@ -34,6 +35,7 @@ type BaseConfiguration = {
 with
     static member Default = {
         BaseConfiguration.scriptDirectories = [| "./scripts" |]
+        maxThreadCount = 1
         pollingInterval = 5
         browser = "chrome"
         browserOptions = [||]
@@ -78,6 +80,7 @@ module BaseConfiguration =
         Decode.object (fun get -> 
             {
                 scriptDirectories = get.Required.Field "scriptDirectories" (Decode.array Decode.string)
+                maxThreadCount = get.Required.Field "maxThreadCount" Decode.int
                 pollingInterval = get.Required.Field "pollingInterval" Decode.int
                 browser = get.Required.Field "browser" Decode.string
                 browserOptions = get.Required.Field "browserOptions" (Decode.array Decode.string)
