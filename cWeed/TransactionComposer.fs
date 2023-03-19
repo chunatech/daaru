@@ -200,7 +200,7 @@ let ProcessFsx (config: TransactionConfiguration) =
     | Some (csdPath: string) ->
         let stagingFilePath: string = sourcePath.Replace(DirectoryInfo(csdPath).FullName,stagingDirFullPath)
         let targetStagingDir: string = Path.GetDirectoryName(stagingFilePath)
-        if Directory.Exists targetStagingDir |> not then Directory.CreateDirectory targetStagingDir |> ignore
+        Directory.CreateDirectory targetStagingDir |> ignore
         File.Copy(sourcePath, stagingFilePath, true)
         
         WriteLog LogLevel.DEBUG this $"copying fsx script to staging location: %s{stagingFilePath}"

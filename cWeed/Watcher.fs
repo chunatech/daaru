@@ -16,7 +16,7 @@ type WatcherType =
 
 
 let create (filter: string) addCb removeCb updateCb (dir: string) =
-    if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore
+    Directory.CreateDirectory dir |> ignore
     let watcher: FileSystemWatcher = new FileSystemWatcher()
     watcher.Filter <- filter
     watcher.Path <- dir

@@ -19,6 +19,7 @@ let stagingDir: string = "./staging"
 
 (*
     Task List:
+    [] Adjust TransactionComposer to write composed cwt transactions to fsx files in staging dir: TransactionComposer.fs
     [] Handle pass and failure states of transactions: RunQueue.fs
     [] Build out logging more fully: Everywhere
     [] Build out package management (local, nuget, custom): ?
