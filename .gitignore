@@ -1,5 +1,6 @@
 cWeed/bin/
 cWeed/obj/
+cWeed/staging
 
 .fake
 cweed.code-workspace
