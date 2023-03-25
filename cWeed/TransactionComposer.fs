@@ -65,14 +65,14 @@ let Init (conf: BaseConfiguration) (stagDir: string) =
 
 
 /// required imports at this time
-let _defaultImports: string array = [|
+let private _defaultImports: string array = [|
     "#r \"nuget: canopy\""
     "#r \"nuget: Selenium.WebDriver.ChromeDriver\""
 |]
 
 
 /// array containing the default open statements in the "header" section
-let _defaultOpenStmts: string array = [|
+let private _defaultOpenStmts: string array = [|
     "open canopy.runner.classic"
     "open canopy.configuration"
     "open canopy.classic"
@@ -136,12 +136,11 @@ let buildHeader (config: TransactionConfiguration) =
     ])
 
 
-// @tina, this function below needs to be adjusted to write the file to a 
-// staging dir, instead of the script dir.
-
 /// retrieves the content from the cwt file and stitches together an fsx file of the same name in the format  
 /// of a canopy test, then writes the file to the configured script location
-let buildTransactionFile (config: TransactionConfiguration) = 
+let buildTransactionFile (config: TransactionConfiguration) =
+    let this: MethodBase = MethodBase.GetCurrentMethod()
+
     // compose all the header information using the config given
     let header: string array = buildHeader config
 
@@ -159,21 +158,15 @@ let buildTransactionFile (config: TransactionConfiguration) =
         quitStmt
     |]
     
-    // put all the pieces together into one string array to be written to file
-    let testFileContent: string array = Array.distinct (Array.concat [
+    // put all the pieces together and return
+    // one string array to be written to file
+    Array.distinct (Array.concat [
         header;
         testName;
         content;
         footer;
     ])
 
-    // set up the file name to be the same as the cwt given
-    let dir: string = Path.GetDirectoryName(config.scriptPath)
-    let testFileName: string = $"{Path.GetFileNameWithoutExtension(config.scriptPath)}.fsx" 
-    
-    // write the file and close it
-    File.WriteAllLines(Path.Join(dir, testFileName), testFileContent)
-    
 
 /// process one cwt file into one fsx file 
 let ProcessCwt (config: TransactionConfiguration) = 
@@ -181,9 +174,28 @@ let ProcessCwt (config: TransactionConfiguration) =
     // assume authorization has been handled at this point 
     // if the script is a cwt, we need compose it into an fsx
     WriteLog LogLevel.DEBUG this $"method not implemented yet.. doing nothing with this value {config}"
-    // TODO:  Adjust to write to staging dir
-    buildTransactionFile config
-    Some(config) // TODO: rework this function to properly check this
+    let testFileContent: string array = buildTransactionFile config
+
+    let stagingDirFullPath: string = DirectoryInfo(stagingDir).FullName
+    let sourcePath: string = FileInfo(config.scriptPath).FullName
+    let sourceScriptDir: option<string> = (bConfig.scriptDirectories 
+        |> Array.filter (fun (csd: string) -> sourcePath.StartsWith(DirectoryInfo(csd).FullName))
+        |> Array.tryExactlyOne)
+
+    match sourceScriptDir with
+    | Some (csdPath: string) ->
+        let stagingFilePath: string = sourcePath.Replace(DirectoryInfo(csdPath).FullName,stagingDirFullPath).Replace(".cwt", ".fsx")
+        let targetStagingDir: string = Path.GetDirectoryName(stagingFilePath)
+        Directory.CreateDirectory targetStagingDir |> ignore
+        // write the file and close it
+        File.WriteAllLines(stagingFilePath, testFileContent)
+        // File.Copy(sourcePath, stagingFilePath, true)
+        
+        WriteLog LogLevel.DEBUG this $"writing fsx script to staging location: %s{stagingFilePath}"
+        Some({ config with stagedScriptPath = stagingFilePath })
+    | None ->
+        WriteLog LogLevel.DEBUG this "something has gone terribly wrong, you should not be here"
+        None
 
 
 /// copy fsx to staging dir, and update transaction config with staged path
