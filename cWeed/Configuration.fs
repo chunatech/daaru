@@ -35,11 +35,11 @@ type BaseConfiguration = {
 with
     static member Default = {
         BaseConfiguration.scriptDirectories = [| "./scripts" |]
-        maxThreadCount = 1
+        maxThreadCount = 5
         pollingInterval = 5
         browser = "chrome"
         browserOptions = [||]
-        browserDriverDir = "/drivers"
+        browserDriverDir = "bin/Debug/net6.0/" //TODO: PUT THIS BACK CHASE: "/drivers"
         nugetPackages = [||]
         logDirName = "logs"
         logDirPath = DirectoryInfo(".").FullName
@@ -70,8 +70,8 @@ type TransactionConfiguration = {
 module BaseConfiguration = 
     /// default configuration location information. Still subject to location/naming change at this time
     // let defaultBaseConfigurationDir = DirectoryInfo(".").FullName
-    let defaultBaseConfigurationDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)
-    let defaultBaseConfigurationFilePath = Path.Join(defaultBaseConfigurationDir, "settings.cweed.json")
+    let defaultBaseConfigurationDir: string = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)
+    let defaultBaseConfigurationFilePath: string = Path.Join(defaultBaseConfigurationDir, "settings.cweed.json")
     
     /// this decodes configuration file json to the BaseConfiguration record type. returns a Decoder which 
     /// when used with Decode.fromString and a string of json, will return a Result of either BaseConfiguration or 
@@ -106,8 +106,8 @@ module BaseConfiguration =
         if File.Exists(filepath) then 
             (
                 match File.ReadAllText(filepath) |> Decode.fromString decoder with
-                    | Ok config -> config
-                    | Error msg -> 
+                    | Ok (config: BaseConfiguration) -> config
+                    | Error (msg: string) -> 
                         // TODO: this needs to be logged out at ERROR level by a handler since
                         // it is in a step pre-logger initilization
                         printfn "%s" msg

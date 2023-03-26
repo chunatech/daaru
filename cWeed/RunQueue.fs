@@ -34,6 +34,7 @@ with
         tr.runTimer.Start()
         tr
 
+
     member this.checkTransactionQueue source (e: ElapsedEventArgs) =
         let transactions: Transaction list = Register.getAll ()
         let needToRun: Transaction list = transactions|> List.filter (fun (x: Transaction) -> x.LastRunTime.AddMinutes(x.Configuration.pollingInterval) <= DateTime.Now)
@@ -43,22 +44,71 @@ with
             this.queue.Enqueue t
         ()
 
+
     member private this.handleTransactionProcessExit (t: Transaction) (threadId : int32) (e: EventArgs) =
         // TODO: Build out logic here to handle result state (Pass/Fail, etc..)
         this.threadTracker.Enqueue threadId
         printfn $"%s{t.Configuration.scriptPath} process exited: %s{DateTime.Now.ToString()}"
+        
+        let latest: option<Transaction> = Register.get t.Configuration.scriptPath
+        match latest with
+        | Some (lt: Transaction) ->
+            printfn "%A" lt.LastRunDetails
+        | None ->
+            ()
+
 
     member private this.handleTransactionOutput (t: Transaction) (e: DataReceivedEventArgs) =
         // TODO: Build out logic here to handle successful results parsing
-        if String.IsNullOrEmpty(e.Data) |> not then
-            printfn $"Output received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
-        ()
+        let latest: option<Transaction> = Register.get t.Configuration.scriptPath
+        match latest with
+        | Some (lt: Transaction) ->
+            if String.IsNullOrEmpty(e.Data) |> not then
+                match e.Data with
+                // PASSED:
+                | (text: string) when text.EndsWith(" passed") ->
+                    let numString: string = text.Split(" ") |> Array.head
+                    let mutable num: int = 0
+                    if Int32.TryParse(numString, &num) then
+                        lt.LastRunDetails.Passed <- num
+                        Register.update lt
+                // FAILED:
+                | (text: string) when text.EndsWith(" failed") ->
+                    let numString: string = text.Split(" ") |> Array.head
+                    let mutable num: int = 0
+                    if Int32.TryParse(numString, &num) then
+                        lt.LastRunDetails.Failed <- num
+                        Register.update lt
+                // SKIPPED:
+                | (text: string) when text.EndsWith(" skipped") ->
+                    let numString: string = text.Split(" ") |> Array.head
+                    let mutable num: int = 0
+                    if Int32.TryParse(numString, &num) then
+                        lt.LastRunDetails.Failed <- num
+                        Register.update lt
+                // Change this to a log:
+                | _ ->
+                    printfn $"Unhandled output received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
+        | None ->
+            ()  // TODO: Add logging here.  We should never reach this.
+
 
     member private this.handleTransactionError (t: Transaction) (e: DataReceivedEventArgs) =
         // TODO: Build out logic here for error/failure parsing and handling
         if String.IsNullOrEmpty(e.Data) |> not then
-            printfn $"Error received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
+            match e.Data with
+            | (text: string) when text.Contains("[WARNING]: This version of ChromeDriver has not been tested with Chrome version") ->
+                let ver: string = text.Substring(text.LastIndexOf(" 1"))
+                // Change this to a log:
+                printfn $"ChromeDriver update necessary.  Expecting version%s{ver}"
+            | (text: string) when text.EndsWith("subscribing a listener to the already connected DevToolsClient. Connection notification will not arrive.") ->
+                ignore text
+            | _ ->
+                t.LastRunDetails.UnhandledErrors <- t.LastRunDetails.UnhandledErrors + 1
+                Register.update t
+                printfn $"Unhandled error received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
         ()
+
 
     member this.runTransactions () =
         if this.queue.TryPeek() |> fst |> not then
