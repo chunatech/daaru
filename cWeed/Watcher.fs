@@ -1,7 +1,12 @@
 module Watcher
 // Filtered watcher of filesystem, to look for any new .cwt or .fsx files, then take action on them.
 
+open System
 open System.IO
+open System.Text
+open System.Globalization
+open System.Security.Cryptography
+
 
 open Logger
 open Configuration
@@ -64,8 +69,26 @@ let update (path: string) =
     // TODO:  Make this method check hash of staged file against source file
     //        Do nothing if they are the same
     let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
-    let msg: string = $"updated {path}" 
-    WriteLogAndPrintToConsole LogLevel.INFO this msg
+    let mutable msg: string = ""
+
+    match (Register.get path) with
+    | Some (t: Transaction) ->
+        let sourceBytes: byte array = File.ReadAllBytes(path)
+        let sourceHash: string = Convert.ToHexString(SHA1.Create().ComputeHash(sourceBytes))
+
+        let stagedBytes: byte array = File.ReadAllBytes(t.Configuration.stagedScriptPath)
+        let stagedHash: string = Convert.ToHexString(SHA1.Create().ComputeHash(stagedBytes))
+
+        if sourceHash <> stagedHash then
+            remove path
+            add path
+            msg <- $"Script updated: %s{path}"
+        // else
+        //     msg <- $"%s{path} touched, but not changed.  Taking no action."
+
+        WriteLogAndPrintToConsole LogLevel.INFO this msg
+    | None ->
+        ()
 
 
 let validateFsx (path: string) =

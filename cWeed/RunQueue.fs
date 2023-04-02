@@ -60,10 +60,10 @@ with
 
     member private this.handleTransactionOutput (t: Transaction) (e: DataReceivedEventArgs) =
         // TODO: Build out logic here to handle successful results parsing
-        let latest: option<Transaction> = Register.get t.Configuration.scriptPath
-        match latest with
-        | Some (lt: Transaction) ->
-            if String.IsNullOrEmpty(e.Data) |> not then
+        if String.IsNullOrEmpty(e.Data) |> not then
+            let latest: option<Transaction> = Register.get t.Configuration.scriptPath
+            match latest with
+            | Some (lt: Transaction) ->
                 match e.Data with
                 // PASSED:
                 | (text: string) when text.EndsWith(" passed") ->
@@ -88,26 +88,39 @@ with
                         Register.update lt
                 // Change this to a log:
                 | _ ->
-                    printfn $"Unhandled output received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
-        | None ->
-            ()  // TODO: Add logging here.  We should never reach this.
+                    lt.LastRunDetails.UnhandledOutput <- lt.LastRunDetails.UnhandledOutput + 1
+                    Register.update lt
+                    // TODO: Maybe add setting to enable/disable this:
+                    lt.WriteOutUnhandled STDOUT e.Data
+
+                    // printfn $"Unhandled output received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
+            | None ->
+                ()  // TODO: Add logging here.  We should never reach this.
 
 
     member private this.handleTransactionError (t: Transaction) (e: DataReceivedEventArgs) =
         // TODO: Build out logic here for error/failure parsing and handling
         if String.IsNullOrEmpty(e.Data) |> not then
-            match e.Data with
-            | (text: string) when text.Contains("[WARNING]: This version of ChromeDriver has not been tested with Chrome version") ->
-                let ver: string = text.Substring(text.LastIndexOf(" 1"))
-                // Change this to a log:
-                printfn $"ChromeDriver update necessary.  Expecting version%s{ver}"
-            | (text: string) when text.EndsWith("subscribing a listener to the already connected DevToolsClient. Connection notification will not arrive.") ->
-                ignore text
-            | _ ->
-                t.LastRunDetails.UnhandledErrors <- t.LastRunDetails.UnhandledErrors + 1
-                Register.update t
-                printfn $"Unhandled error received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
-        ()
+            let latest: option<Transaction> = Register.get t.Configuration.scriptPath
+            match latest with
+            | Some (lt: Transaction) ->
+                match e.Data with
+                // Version mismatch:
+                | (text: string) when text.Contains("[WARNING]: This version of ChromeDriver has not been tested with Chrome version") ->
+                    let ver: string = text.Substring(text.LastIndexOf("version ")).Replace("version ", "").Replace(".", "")
+                    // Change this to a log:
+                    printfn $"ChromeDriver update necessary.  Expecting version %s{ver}."
+                    lt.LastRunDetails.DriverVersionMismatch <- (true, ver)
+                    Register.update lt
+                // | (text: string) when text.EndsWith("subscribing a listener to the already connected DevToolsClient. Connection notification will not arrive.") ->
+                //     ignore text
+                | _ ->
+                    lt.LastRunDetails.UnhandledErrors <- lt.LastRunDetails.UnhandledErrors + 1
+                    Register.update lt
+                    lt.WriteOutUnhandled STDERR e.Data
+                    // printfn $"Unhandled error received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
+            | None ->
+                ()  // TODO: Add logging here.  We should never reach this.
 
 
     member this.runTransactions () =

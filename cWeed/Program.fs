@@ -19,14 +19,15 @@ let stagingDir: string = "./staging"
 
 (*
     Task List:
-    [] Adjust TransactionComposer to write composed cwt transactions to fsx files in staging dir: TransactionComposer.fs
-    [] Handle pass and failure states of transactions: RunQueue.fs
-    [] Build out logging more fully: Everywhere
-    [] Build out package management (local, nuget, custom): ?
+    [x] Adjust TransactionComposer to write composed cwt transactions to fsx files in staging dir: TransactionComposer.fs
+    [/] Handle pass and failure states of transactions: RunQueue.fs
+    [] Update staging scripts on source script update: Watcher.fs, Register.fs
+    [] Build out transaction config layering properly: TransactionComposer.fs
+    [] Build out secure mode logic: RunQueue.fs, Watcher.fs
     [] Build out event sending logic (call program or api): RunQueue.fs, Configuration.fs, TransactionComposer.fs
     [] Build credential query caller: RunQueue.fs, Configuration.fs
-    [] Build out secure mode logic: RunQueue.fs, Watcher.fs
-    [] Build out transaction config layering properly: TransactionComposer.fs
+    [] Build out logging more fully: Everywhere
+    [] Build out package management (local, nuget, custom): ?
 *)
 
 [<EntryPoint>]

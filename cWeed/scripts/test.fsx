@@ -25,7 +25,7 @@ start browserWO
 
     //assert that the element with an id of 'welcome' has
     //the text 'Welcome'
-    "#welcome" == "Welcome"
+    "#welcome" == "11Welcome11"
 
     //assert that the element with an id of 'firstName' has the value 'John'
     "#firstName" == "John"
@@ -42,7 +42,5 @@ start browserWO
 
 //run all tests
 run()
-
-printfn "tests completed!"
 
 quit(browserWO)
