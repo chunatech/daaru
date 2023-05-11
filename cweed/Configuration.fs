@@ -42,7 +42,8 @@ with
         browserDriverDir = "bin/Debug/net6.0/" //TODO: PUT THIS BACK CHASE: "/drivers"
         nugetPackages = [||]
         logDirName = "logs"
-        logDirPath = DirectoryInfo(".").FullName
+        // logDirPath = DirectoryInfo(".").FullName
+        logDirPath = System.AppContext.BaseDirectory
         rollingSize = 10
         logFormat = "unstructured"
         loggingLevel = 1

@@ -12,8 +12,12 @@ open Logger
 open RunQueue
 open Configuration
 
+// printfn "%s" Path.Combine(System.AppContext.BaseDirectory, "fsi_standalone")
+printfn "%b" ((Path.Join(System.AppContext.BaseDirectory, "fsi_standalone")) |> File.Exists)
+// printfn  "%b" File.Exists()
+
 // Set internal global variables
-let fsiSaLocation: string = "../../../fsiStandalone/TestMultiple/fsiStandalone/fsiStandalone"
+let fsiSaLocation: string = (Path.Join(System.AppContext.BaseDirectory, "fsi_standalone"))
 let stagingDir: string = "./staging"
 // letBaseConfigLocation: string ""
 
@@ -51,7 +55,7 @@ let main (argv: string[]) =
     // WriteLog LogLevel.INFO this $"base configuration was set to {config}"
 
     // clear out existing staged scripts if they exist
-    Directory.Delete(DirectoryInfo(stagingDir).FullName, true)
+    if (Directory.Exists(stagingDir)) then Directory.Delete(DirectoryInfo(stagingDir).FullName, true)
 
     // find all existing scripts in configured directories and register them
     let existingScripts: string array = Watcher.registerExistingScripts config.scriptDirectories
