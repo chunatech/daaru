@@ -4,5 +4,6 @@ cWeed/staging
 
 .fake
 cweed.code-workspace
+.vscode
 
 logs
