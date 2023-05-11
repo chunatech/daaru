@@ -1,9 +1,9 @@
-cWeed/bin/
-cWeed/obj/
-cWeed/staging
+**/bin/
+**/obj/
+**/build
 
+.vscode
 .fake
 cweed.code-workspace
-.vscode
 
 logs
