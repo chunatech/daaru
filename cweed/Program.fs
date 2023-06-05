@@ -12,9 +12,9 @@ open Logger
 open RunQueue
 open Configuration
 
-// printfn "%s" Path.Combine(System.AppContext.BaseDirectory, "fsi_standalone")
-printfn "%b" ((Path.Join(System.AppContext.BaseDirectory, "fsi_standalone")) |> File.Exists)
-// printfn  "%b" File.Exists()
+//printfn "%s" (Path.Combine(System.AppContext.BaseDirectory, "fsi_standalone"))
+//printfn "%b" ((Path.Join(System.AppContext.BaseDirectory, "fsi_standalone")) |> File.Exists)
+//printfn  "%b" File.Exists()
 
 // Set internal global variables
 let fsiSaLocation: string = (Path.Join(System.AppContext.BaseDirectory, "fsi_standalone"))
@@ -52,21 +52,36 @@ let main (argv: string[]) =
     InitLogger(loggerSettings)
 
     WriteLog LogLevel.INFO this "logger Initialized"
-    // WriteLog LogLevel.INFO this $"base configuration was set to {config}"
+    WriteLog LogLevel.INFO this $"base configuration was set to {config}"
+    WriteLog LogLevel.INFO this  $"transaction composer initialized. staging directory set to {stagingDir}. configuration set to base configuration"
 
     // clear out existing staged scripts if they exist
     if (Directory.Exists(stagingDir)) then Directory.Delete(DirectoryInfo(stagingDir).FullName, true)
 
     // find all existing scripts in configured directories and register them
     let existingScripts: string array = Watcher.registerExistingScripts config.scriptDirectories
+
     // set up watchers for configured script directories
     let sourceWatcherList: FileSystemWatcher array = 
         Watcher.createForDirs Watcher.WatcherType.Source config.scriptDirectories
+
     // set up watcher for staged script directory
     let stagingFsxWatcherList: FileSystemWatcher array = 
         Watcher.createForDirs Watcher.WatcherType.Staging [|stagingDir|]
-    // TODO: Log out details from above three variables here
+
+    // format existing scripts list for logging 
+    let formattedExistingScripts = String.Join(",", existingScripts)
     
+    WriteLog LogLevel.DEBUG this $"the value of existingScripts is [ {formattedExistingScripts} ]"
+
+    // format the watcher list paths for logging 
+    let fmtWatcherList watcherList = ( "," , (sourceWatcherList |> Array.map (fun watcher -> watcher.Path)) ) |> String.Join
+    let formattedSrcWatcherList = fmtWatcherList sourceWatcherList
+    let formattedStagingFsxWatcherList = fmtWatcherList stagingFsxWatcherList
+
+    WriteLog LogLevel.DEBUG this $"the value of sourceWatcherList is [ {formattedSrcWatcherList} ]"
+    WriteLog LogLevel.DEBUG this $"the value of stagingFsxWatcherList is [ {formattedStagingFsxWatcherList} ]"
+
     // print running directory to console and log
     let curDirInfo: DirectoryInfo = DirectoryInfo(".")
     WriteLogAndPrintToConsole LogLevel.INFO this $"cWeed has started and is running from %s{curDirInfo.FullName}"
@@ -74,9 +89,9 @@ let main (argv: string[]) =
     // Initialize thread tracker and populate it
     let fsiFi: FileInfo = FileInfo(fsiSaLocation)
     let runner: TransactionRunner = TransactionRunner.init fsiFi.FullName config.maxThreadCount
+    WriteLog LogLevel.INFO this $"TransactionRunner is initialized with fsi location at %s{runner.fsiPath} and max thread count set to %d{config.maxThreadCount}"
     
     while true do
         Threading.Thread.Sleep(100)
         runner.runTransactions ()
-
     0
