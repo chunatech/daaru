@@ -27,11 +27,13 @@ let stagingDir: string = "./staging"
     [/] Handle pass and failure states of transactions: RunQueue.fs
     [] Update staging scripts on source script update: Watcher.fs, Register.fs
     [] Build out transaction config layering properly: TransactionComposer.fs
-    [] Build out secure mode logic: RunQueue.fs, Watcher.fs
     [] Build out event sending logic (call program or api): RunQueue.fs, Configuration.fs, TransactionComposer.fs
     [] Build credential query caller: RunQueue.fs, Configuration.fs
-    [] Build out logging more fully: Everywhere
+    [/] Build out logging more fully: Everywhere
+
+    nice to haves
     [] Build out package management (local, nuget, custom): ?
+    [] Build out secure mode logic: RunQueue.fs, Watcher.fs
 *)
 
 [<EntryPoint>]

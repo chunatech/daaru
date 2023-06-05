@@ -46,7 +46,7 @@ with
         logDirPath = System.AppContext.BaseDirectory
         rollingSize = 10
         logFormat = "unstructured"
-        loggingLevel = 1
+        loggingLevel = 0
     }
 
 type DirectoryConfiguration = {
