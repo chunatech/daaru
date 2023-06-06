@@ -6,6 +6,7 @@ open System.Diagnostics
 
 open CWeedTransactions
 open System.Collections.Concurrent
+open Logger
 
 
 // wrapper around concurrent queue to store transactions
@@ -91,9 +92,11 @@ with
                     lt.LastRunDetails.UnhandledOutput <- lt.LastRunDetails.UnhandledOutput + 1
                     Register.update lt
                     // TODO: Maybe add setting to enable/disable this:
+                    // consider as debug setting in future when debug settings are programmed. for now keep as .unhandled file -Tina
                     lt.WriteOutUnhandled STDOUT e.Data
 
-                    // printfn $"Unhandled output received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
+                    WriteLog LogLevel.DEBUG (System.Reflection.MethodBase.GetCurrentMethod()) $"STDOUT: Unhandled output received from %s{t.Configuration.scriptPath}: %s{e.Data}"
+                    
             | None ->
                 ()  // TODO: Add logging here.  We should never reach this.
 
@@ -109,7 +112,8 @@ with
                 | (text: string) when text.Contains("[WARNING]: This version of ChromeDriver has not been tested with Chrome version") ->
                     let ver: string = text.Substring(text.LastIndexOf("version ")).Replace("version ", "").Replace(".", "")
                     // Change this to a log:
-                    printfn $"ChromeDriver update necessary.  Expecting version %s{ver}."
+                    WriteLog LogLevel.WARN (System.Reflection.MethodBase.GetCurrentMethod()) $"ChromeDriver update necessary.  Expecting version %s{ver}."
+                    //printfn $"ChromeDriver update necessary.  Expecting version %s{ver}."
                     lt.LastRunDetails.DriverVersionMismatch <- (true, ver)
                     Register.update lt
                 // | (text: string) when text.EndsWith("subscribing a listener to the already connected DevToolsClient. Connection notification will not arrive.") ->
@@ -119,6 +123,7 @@ with
                     Register.update lt
                     lt.WriteOutUnhandled STDERR e.Data
                     // printfn $"Unhandled error received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
+                    WriteLog LogLevel.DEBUG (System.Reflection.MethodBase.GetCurrentMethod()) $"STDERROR: Unhandled output received from %s{t.Configuration.scriptPath}: %s{e.Data}"
             | None ->
                 ()  // TODO: Add logging here.  We should never reach this.
 
