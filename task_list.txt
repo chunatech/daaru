@@ -34,3 +34,35 @@ main loop description:
             create watcher for each dir found that contains .cwt and/or .fsx files
     loop:
         
+Use Case: 
+
+endpoint user would need to get data from 
+transaction pass/failures as they occur and 
+pass that data to an uspecified location 
+
+currently each transaction sends its own event
+this might change 
+
+idea 1
+output queue / transaction results queue
+as a part of the loop after transactions are 
+process, then process transaction results 
+
+results queue 
+- name: TransactionResultsPublisher
+- setting: send as individual / send as bulk
+- template together the user defined fn for their api or 
+whatever with whatever we need to format the data to publish 
+and then run it with the fsi to get the user the data on their 
+service of choice. 
+
+module TransactionResultsPublisher
+(config) param PublishFileLocation (publish function file path)
+(config) param individual/bulk
+data PublishQueue
+data PublishScript
+fn composePublishScript
+fn publishBulk
+fn publishSingle
+fn publish
+
