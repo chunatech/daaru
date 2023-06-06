@@ -1,6 +1,7 @@
 #!/bin/bash
 OUTDIR=./build/release/linux-x64
 
+echo "Removing old build directory: ${OUTDIR}"
 rm -rf $OUTDIR
 
 while [ -d $OUTDIR ]
@@ -12,6 +13,7 @@ dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishTrimmed=t
 
 [ ! -d $OUTDIR/bin ] && mkdir $OUTDIR/bin
 
+echo "Moving compiled binaries to ${OUTDIR}/bin"
 for f in $(ls $OUTDIR | grep -v bin)
 do
     mv $OUTDIR/$f $OUTDIR/bin/
@@ -19,5 +21,5 @@ done
 
 for d in config logs results scripts staging
 do
-    [ ! -d ./bin/cweed ] && mkdir $OUTDIR/$d
+    [ ! -d ./bin/cweed ] && mkdir $OUTDIR/$d && echo "Created dir ${OUTDIR}/${d}"
 done
