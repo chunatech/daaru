@@ -23,17 +23,27 @@ let stagingDir: string = "./staging"
 
 (*
     Task List:
+
+    General
     [x] Adjust TransactionComposer to write composed cwt transactions to fsx files in staging dir: TransactionComposer.fs
-    [/] Handle pass and failure states of transactions: RunQueue.fs
+    [/] Build out logging more fully: Everywhere
+    [] finalize directory structure for compiled/installed project 
+    [] handle cases for missing directories in dirstructure 
+
+    Script Watching 
     [] Update staging scripts on source script update: Watcher.fs, Register.fs
+
+    Templating tasks
     [] Build out transaction config layering properly: TransactionComposer.fs
     [] Build out event sending logic (call program or api): RunQueue.fs, Configuration.fs, TransactionComposer.fs
     [] Build credential query caller: RunQueue.fs, Configuration.fs
-    [/] Build out logging more fully: Everywhere
 
-    nice to haves
-    [] Build out package management (local, nuget, custom): ?
-    [] Build out secure mode logic: RunQueue.fs, Watcher.fs
+    transactions 
+    [/] Handle pass and failure states of transactions: RunQueue.fs
+    
+    pkg mgmt, dependency handling 
+    [] handle chrome driver updating 
+    [] Build out package management (local, nuget, custom):
 *)
 
 [<EntryPoint>]
