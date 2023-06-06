@@ -39,8 +39,9 @@ let stagingDir: string = "./staging"
     [] Build credential query caller: RunQueue.fs, Configuration.fs
 
     transactions 
-    [/] Handle pass and failure states of transactions: RunQueue.fs
-    
+    [x] Handle pass and failure states of transactions: RunQueue.fs
+    [ ] transaction events publishing
+
     pkg mgmt, dependency handling 
     [] handle chrome driver updating 
     [] Build out package management (local, nuget, custom):
