@@ -234,12 +234,14 @@ let RollLogFile () =
 /// write a single entry to the log file. this method will manage opening 
 /// and closing the filestream
 let WriteLogEntryToFile (entry: LogEntry) = 
-    let logFile = File.OpenWrite(logFilePath)
-    logFile.Position <- logFile.Length
-    let bytes = Encoding.UTF8.GetBytes $"%s{entry.ToLogString}\n"
-    logFile.Write(bytes)
-    logFile.Flush() 
-    logFile.Close()
+    // let logFile = 
+    File.AppendAllLinesAsync(logFilePath, [$"%s{entry.ToLogString}"]) |> ignore
+    
+    // logFile.Position <- logFile.Length
+    // let bytes = Encoding.UTF8.GetBytes $"%s{entry.ToLogString}\n"
+    // logFile.Write(bytes)
+    // logFile.Flush() 
+    // logFile.Close()
     
 
 /// runs after write log and handles processing the queue of logs
