@@ -1,0 +1,1 @@
+& dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishTrimmed=true /p:PublishSingleFile=true -o ./build/release/linux-x64
