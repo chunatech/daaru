@@ -4,6 +4,8 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ConfigTypes.fs" />
+    <Compile Include="Decoders.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Logger.fs" />
     <Compile Include="Configuration.fs" />
