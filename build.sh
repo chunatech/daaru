@@ -1,25 +1,16 @@
 #!/bin/bash
 OUTDIR=./build/release/linux-x64
 
-echo "Removing old build directory: ${OUTDIR}"
-rm -rf $OUTDIR
+echo "Removing old build files at: ${OUTDIR}"
 
-while [ -d $OUTDIR ]
-do
-    sleep 3
-done
+rm $OUTDIR/cweed
+rm $OUTDIR/cweed.pdb
+rm $OUTDIR/fsi_standalone
+rm $OUTDIR/fsi_standalone.pdb
 
 dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishTrimmed=true /p:PublishSingleFile=true -o $OUTDIR
 
-[ ! -d $OUTDIR/bin ] && mkdir $OUTDIR/bin
-
-echo "Moving compiled binaries to ${OUTDIR}/bin"
-for f in $(ls $OUTDIR | grep -v bin)
+for d in config logs results scripts staging drivers
 do
-    mv $OUTDIR/$f $OUTDIR/bin/
-done
-
-for d in config logs results scripts staging
-do
-    [ ! -d ./bin/cweed ] && mkdir $OUTDIR/$d && echo "Created dir ${OUTDIR}/${d}"
+    [ ! -d $OUTDIR/$d ] && mkdir $OUTDIR/$d && echo "Created dir ${OUTDIR}/${d}"
 done
