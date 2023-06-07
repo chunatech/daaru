@@ -1,54 +1,50 @@
-(*
-    Tasks: 
-
-    [_] optional fields allowed on configs 
-    [_] readFromFile callback for logging/error handling in main
-
-    considerations on optional fields [discussion needed]
-    - which fields should be optional? 
-    - handle optionial fields pre mvp?
-    - adding 'localPacakges' member/fields. 
-*)
 module Configuration
 
 open System.IO
 open Thoth.Json.Net
 
-/// record type to hold the applications base configuration. this contains information regarding 
-/// which directories to watch, packages to use, browser to use, options to set and is the default 
-/// setup for everything within watched directories unless otherwise specified with a directory 
-/// specific configuration setup 
-type BaseConfiguration = {
-    scriptDirectories: string array
-    maxThreadCount: int
-    pollingInterval: int 
+(*
+    TODO: 
+    [ ] handle logging in this file
+*)
+
+/// this configuration type describes the 
+/// configuration for a browser that is going 
+/// to be used to run transactions. It is nested 
+/// into the AppConfiguration type and there can 
+/// be more than one of them. at this time, however
+/// only one browser, chrome, is supported. 
+type BrowserConfiguration = {
     browser: string 
-    browserOptions: string array 
-    browserDriverDir: string
-    nugetPackages: string array
-    logDirName: string;
-    logDirPath: string;
-    rollingSize: int;
-    logFormat: string;
-    loggingLevel: int;
-}
-with
-    static member Default = {
-        BaseConfiguration.scriptDirectories = [| "./scripts" |]
-        maxThreadCount = 5
-        pollingInterval = 1
+    browserOpts: string list 
+    driverLocation: string
+} with 
+    static member Default () = {
         browser = "chrome"
-        browserOptions = [||]
-        browserDriverDir = "./drivers"
-        nugetPackages = [||]
-        logDirName = "logs"
-        // logDirPath = DirectoryInfo(".").FullName
-        logDirPath = System.AppContext.BaseDirectory
-        rollingSize = 10
-        logFormat = "unstructured"
-        loggingLevel = 0
+        browserOpts = []
+        driverLocation = "./drivers"
     }
 
+/// this is the logging configuration settings and 
+/// are nested within the AppConfiguration record 
+type LoggingConfiguration = {
+    location: string 
+    rollSize: int 
+    format: string 
+    verbosity: int 
+} with 
+    static member Default () = {
+        location = "/logs"
+        rollSize = 10
+        format = "unstructured"
+        verbosity = 1
+    }
+
+
+/// this is directory specific configuration intended 
+/// for the transaction runner to use. this configuration 
+/// layers between what is given as default and any 
+/// configuration that is given at the top of a file  
 type DirectoryConfiguration = {
     pollingInterval: int 
     browser: string 
@@ -57,6 +53,12 @@ type DirectoryConfiguration = {
     nugetPackages: string array
 }
 
+/// this is the configuration record for a specific transaction 
+/// intended for use by the transaction runner. this configuration 
+/// is composed together via defaults, directory specific, and 
+/// configurations provided at the top of the transaction in a config
+/// tag. in order of precedence, file, directory, default is considered
+/// with file being the foremost important.
 type TransactionConfiguration = {
     scriptPath: string
     stagedScriptPath: string
@@ -68,52 +70,103 @@ type TransactionConfiguration = {
 }
 
 
-module BaseConfiguration = 
-    /// default configuration location information. Still subject to location/naming change at this time
-    // let defaultBaseConfigurationDir = DirectoryInfo(".").FullName
-    let defaultBaseConfigurationDir: string = Path.Combine(System.AppContext.BaseDirectory, "config") 
-    let defaultBaseConfigurationFilePath: string = Path.Join(defaultBaseConfigurationDir, "settings.cweed.json")
-    
-    /// this decodes configuration file json to the BaseConfiguration record type. returns a Decoder which 
-    /// when used with Decode.fromString and a string of json, will return a Result of either BaseConfiguration or 
-    /// String Error 
-    let decoder : Decoder<BaseConfiguration> = 
-        Decode.object (fun get -> 
+/// this is the overall application configuration. Any
+/// settings for cweed itself are listed here. this 
+/// "parent" configuration also holds the settings 
+/// for the logs and browsers configured
+type AppConfiguration = {
+    scriptDirs: string list 
+    maxThreadCount: int 
+    pollingInterval: int 
+    logs: LoggingConfiguration
+    browsers: BrowserConfiguration list 
+} with 
+    static member Default () = {
+        scriptDirs = ["./scripts"]
+        maxThreadCount = 4
+        pollingInterval = 5
+        logs = LoggingConfiguration.Default()
+        browsers = [ BrowserConfiguration.Default() ]
+    }
+
+
+/// this module holds json decoders for the configurations types
+module ConfigurationDecoders = 
+    let browserConfigDecoder : Decoder<BrowserConfiguration> = 
+        Decode.object (
+            fun get -> 
             {
-                scriptDirectories = get.Required.Field "scriptDirectories" (Decode.array Decode.string)
-                maxThreadCount = get.Required.Field "maxThreadCount" Decode.int
-                pollingInterval = get.Required.Field "pollingInterval" Decode.int
                 browser = get.Required.Field "browser" Decode.string
-                browserOptions = get.Required.Field "browserOptions" (Decode.array Decode.string)
-                browserDriverDir = get.Required.Field "browserDriverDir" Decode.string
-                nugetPackages = get.Required.Field "nugetPackages" (Decode.array Decode.string)
-                logDirName = get.Required.Field "logDirName" Decode.string
-                logDirPath = get.Required.Field "logDirPath" Decode.string
-                rollingSize = get.Required.Field "rollingSize" Decode.int
-                logFormat = get.Required.Field "logFormat" Decode.string
-                loggingLevel = get.Required.Field "loggingLevel" Decode.int
+                driverLocation = get.Required.Field "driverLocation" Decode.string
+                browserOpts = 
+                    get.Optional.Field "browserOpts" (Decode.list Decode.string) 
+                    |> Option.defaultValue []
             }
-        )    
-    
-    /// default record to use base configuration in case there is no specified configuration or the specified 
-    /// is not found or improperly formatted 
-    let defaultConfig: BaseConfiguration = BaseConfiguration.Default
+        )
 
 
-    /// takes in a filepath to a base conf file as filepath param. at this time all fields are required 
-    /// returns either the configuration read from file or default configuration defined in Default method ^
-    let readFromFileOrDefault (filepath:string) =
-        printfn "default base conf dir: %A" defaultBaseConfigurationDir 
-        if File.Exists(filepath) then 
-            (
-                match File.ReadAllText(filepath) |> Decode.fromString decoder with
-                    | Ok (config: BaseConfiguration) -> config
-                    | Error (msg: string) -> 
-                        // TODO: this needs to be logged out at ERROR level by a handler since
-                        // it is in a step pre-logger initilization
-                        printfn "%s" msg
-                        BaseConfiguration.Default
-            )
-        else 
-            BaseConfiguration.Default
+    let loggingConfigurationDecoder: Decoder<LoggingConfiguration> = 
+        Decode.object (
+            fun get -> 
+            {
+                location =
+                    get.Optional.Field "location" Decode.string 
+                    |> Option.defaultValue "/logs"
+                rollSize = 
+                    get.Optional.Field "rollSize" Decode.int 
+                    |> Option.defaultValue 10
+                format = 
+                    get.Optional.Field "format" Decode.string 
+                    |> Option.defaultValue "unstructured"
+                verbosity = 
+                    get.Optional.Field "verbosity" Decode.int 
+                    |> Option.defaultValue 1
+            }
+        )
+
+    let AppConfigurationDecoder = 
+        Decode.object (
+            fun get -> 
+                {
+                    scriptDirs = 
+                        get.Optional.Field "scriptDirectories" (Decode.list Decode.string)
+                        |> Option.defaultValue ["/scripts"]
+                    maxThreadCount = 
+                        get.Optional.Field "maxThreadCount" Decode.int
+                        |> Option.defaultValue 4
+                    pollingInterval = 
+                        get.Optional.Field "pollingInterval" Decode.int
+                        |> Option.defaultValue 5
+                    logs = 
+                        get.Optional.Field "logs" loggingConfigurationDecoder
+                        |> Option.defaultValue (AppConfiguration.Default().logs)
+                    browsers = 
+                        get.Optional.Field "browsers" (Decode.list browserConfigDecoder)
+                        |> Option.defaultValue (AppConfiguration.Default().browsers)
+                }
+        )
+
+/// default location of the user provided configuration file
+let DefaultConfigurationFileLocation = Path.Combine(System.AppContext.BaseDirectory, "/config")
+
+/// default config file name
+let DefaultConfigurationFileName = "config.json"
+
+/// load a configuration file from a filepath. If the file does not exist, then 
+/// load the default application configuration
+let ConfigurationFromFile filepath =
+    // if the configfile isn't there just return the defaults 
+    if (File.Exists(filepath) |> not) then 
+        AppConfiguration.Default()
+    else 
+        let contents: string = 
+            File.ReadAllTextAsync(filepath) 
+            |> Async.AwaitTask 
+            |> Async.RunSynchronously
+
+        match contents |> Decode.fromString ConfigurationDecoders.AppConfigurationDecoder with 
+            | Ok config -> config
+            | Error errstr -> 
+                printfn $"error loading configfile %s{errstr}"
+                AppConfiguration.Default()
                 
