@@ -48,6 +48,7 @@ open Thoth.Json.Net
 
 // general utilities 
 open Utils
+open ConfigTypes
 
 
 /// this enum represents the level of log verbosity
@@ -169,7 +170,7 @@ with
 /// this will contain the stored settings derived from the settings file after 
 /// initialization. before initialization (or if this doesn't occur this is set)
 /// to the default record for LoggerSettings
-let mutable settings = LoggerSettings.Default 
+let mutable LoggerConfig = LoggingConfiguration.Default()
 
 /// holds the log entries to be written. Only the Logger should ever use this
 let LogEntryQueue = ConcurrentQueue<LogEntry>()
@@ -177,40 +178,38 @@ let LogEntryQueue = ConcurrentQueue<LogEntry>()
 
 /// this is how the current log file name will look
 let logFileName: string = 
-    if settings.logFormat = LogFormat.Json then 
+    if LoggerConfig.format= "json" then 
         $"{ApplicationName}.log.json"
     else 
         $"{ApplicationName}.log"
 
-let logFilePath = Path.Join(settings.logDir, logFileName)
-
+let logFilePath = Path.Join(LoggerConfig.location, logFileName)
 
 /// initialize the logger with the settings from the user 
-let InitLogger (settingsFromConfig: LoggerSettings) = 
+let InitLogger (config: LoggingConfiguration) = 
     // for logging purposes
     let this = MethodBase.GetCurrentMethod()
     
     // give logger the settings from the configuration file
-    settings <- settingsFromConfig
+    LoggerConfig <- config
 
     // directly add to queue here as logger is not fully initialized yet 
-    let log = LogEntry.Create LogLevel.INFO this $"logger settings: {settings}"
+    let log = LogEntry.Create LogLevel.INFO this $"logger settings: %A{LoggerConfig}"
     LogEntryQueue.Enqueue log
     
     // create or locate the log directory
-    let dir = Directory.CreateDirectory(settings.logDir)
+    let dir = Directory.CreateDirectory(LoggerConfig.location)
     
     // directly add to queue here as logger is not fully initialized yet
     let log = LogEntry.Create LogLevel.INFO this $"creating log directory at {dir} if it does not already exist"
     LogEntryQueue.Enqueue log
 
 
-
 /// if true the file is at least of the size specified for roll and should be rolled
 /// over using the RollLogFile method below
 let IsRollSize () = 
     if File.Exists(logFilePath) then 
-        int64(FileInfo(logFilePath).Length / int64(1024 * 1024)) >= settings.logFileRollingSize
+        int64(FileInfo(logFilePath).Length / int64(1024 * 1024)) >= LoggerConfig.rollSize
     else 
         false 
 
@@ -223,26 +222,27 @@ let RollLogFile () =
         let firstLine = File.ReadLines(logFileToRename) |> Enumerable.First 
         let firstTimeStamp = (firstLine.Split('.')[0]).TrimEnd()
         let filename = (
-            match settings.logFormat with 
-                | Json -> $"{ApplicationName}{firstTimeStamp}_{(CreateTimeStampNow (DateTime.Now) FileNameDateFormat)}.log.json"
+            match LoggerConfig.format with 
+                | "json" -> $"{ApplicationName}{firstTimeStamp}_{(CreateTimeStampNow (DateTime.Now) FileNameDateFormat)}.log.json"
                 | _ -> $"{ApplicationName}_{firstTimeStamp}_{(CreateTimeStampNow (DateTime.Now) FileNameDateFormat)}.log"
         )        
-        let newLogFilePath = Path.Join(settings.logDir, filename)
+        let newLogFilePath = Path.Join(LoggerConfig.location, filename)
         File.Move(logFileToRename, newLogFilePath)
     ()
 
 /// write a single entry to the log file. this method will manage opening 
 /// and closing the filestream
 let WriteLogEntryToFile (entry: LogEntry) = 
-    // let logFile = 
     File.AppendAllLinesAsync(logFilePath, [$"%s{entry.ToLogString}"]) |> ignore
-    
-    // logFile.Position <- logFile.Length
-    // let bytes = Encoding.UTF8.GetBytes $"%s{entry.ToLogString}\n"
-    // logFile.Write(bytes)
-    // logFile.Flush() 
-    // logFile.Close()
-    
+
+
+let QueueLogEntry (entry: LogEntry) = 
+    LogEntryQueue.Enqueue entry
+
+
+let QueueLog (level: LogLevel) (callerMethod: MethodBase) (msg: string) = 
+    let entry: LogEntry = LogEntry.Create level callerMethod msg
+    QueueLogEntry entry
 
 /// runs after write log and handles processing the queue of logs
 let ProcessQueue () = 
@@ -257,13 +257,13 @@ let ProcessQueue () =
             | _ -> 
                 ()
 
+
 /// writes a log to the logfile specified by configuraiton and 
 /// only if the level specified for the log is >= the loggingLevel
 /// field in the configuration (set to Error by default) 
 let WriteLog (level:LogLevel) callerMethod msg =  
-    if (int level) >= (int settings.loggingLevel) then
-        let entry = LogEntry.Create level callerMethod msg
-        LogEntryQueue.Enqueue entry
+    if (int level) >= (int LoggerConfig.verbosity) then
+        QueueLog level callerMethod msg
     else 
         ()
     // this will process either way as the logger itself queues items
@@ -277,10 +277,10 @@ let WriteLog (level:LogLevel) callerMethod msg =
 /// field in the configuration (set to Error by default) 
 /// prints the log to the console
 let WriteLogAndPrintToConsole (level:LogLevel) callerMethod msg =  
-    if (int level) >= (int settings.loggingLevel) then
+    if (int level) >= (int LoggerConfig.verbosity) then
         let entry = LogEntry.Create level callerMethod msg
-        LogEntryQueue.Enqueue entry
         entry.PrintToConsole LogFormat.Unstructured
+        QueueLogEntry entry
     else 
         ()
     // this will process either way as the logger itself queues items

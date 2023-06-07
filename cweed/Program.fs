@@ -10,6 +10,7 @@ open System.IO
 open Utils
 open Logger
 open RunQueue
+open ConfigTypes
 open Configuration
 
 //printfn "%s" (Path.Combine(System.AppContext.BaseDirectory, "fsi_standalone"))
@@ -52,17 +53,13 @@ let main (argv: string[]) =
     let this: Reflection.MethodBase = (System.Reflection.MethodBase.GetCurrentMethod())
 
     // Find and read base/default config file
-    let config: BaseConfiguration = 
-        BaseConfiguration.readFromFileOrDefault BaseConfiguration.defaultBaseConfigurationFilePath
-
-    // create settings to pass into the Logger
-    let loggerSettings: LoggerSettings = 
-        LoggerSettings.Create (Path.Join(config.logDirPath, config.logDirName)) config.rollingSize config.logFormat config.loggingLevel
+    let config:  AppConfiguration = ConfigurationFromFileOrDefault (Path.Combine(DefaultConfigurationFileLocation,DefaultConfigurationFileName))
     
+    // initialize the transaction composer
     TransactionComposer.Init config stagingDir
 
     // call the loggers initialization method
-    InitLogger(loggerSettings)
+    InitLogger(config.logs)
 
     WriteLog LogLevel.INFO this "logger Initialized"
     WriteLog LogLevel.INFO this $"base configuration was set to {config}"
@@ -72,11 +69,11 @@ let main (argv: string[]) =
     if (Directory.Exists(stagingDir)) then Directory.Delete(DirectoryInfo(stagingDir).FullName, true)
 
     // find all existing scripts in configured directories and register them
-    let existingScripts: string array = Watcher.registerExistingScripts config.scriptDirectories
+    let existingScripts: string array = Watcher.registerExistingScripts (config.scriptDirs |> List.toArray)
 
     // set up watchers for configured script directories
     let sourceWatcherList: FileSystemWatcher array = 
-        Watcher.createForDirs Watcher.WatcherType.Source config.scriptDirectories
+        Watcher.createForDirs Watcher.WatcherType.Source (config.scriptDirs |> List.toArray)
 
     // set up watcher for staged script directory
     let stagingFsxWatcherList: FileSystemWatcher array = 

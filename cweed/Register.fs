@@ -2,6 +2,7 @@ module Register
 
 open System
 
+open ConfigTypes
 open Configuration
 open CWeedTransactions
 

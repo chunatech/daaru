@@ -2,6 +2,7 @@ module CWeedTransactions
 
 open System
 open System.IO
+open ConfigTypes
 open Configuration
 
 type UnhandledOutput = 

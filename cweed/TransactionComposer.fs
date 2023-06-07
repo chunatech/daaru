@@ -44,6 +44,7 @@ open System.Reflection
 open System.IO
 
 open Utils
+open ConfigTypes
 open Configuration
 open Logger
 
@@ -56,15 +57,16 @@ type PkgLocation =
     | Internal
 
 
-let mutable bConfig: BaseConfiguration = BaseConfiguration.Default
+let mutable bConfig:  AppConfiguration = ConfigurationFromFileOrDefault (Path.Combine(DefaultConfigurationFileLocation, DefaultConfigurationFileName))
 let mutable stagingDir: string = "./staging"
 
-let Init (conf: BaseConfiguration) (stagDir: string) = 
+let Init (conf: AppConfiguration) (stagDir: string) = 
     bConfig <- conf
     stagingDir <- stagDir
 
 
 /// required imports at this time
+/// TODO: fix this logic because its crashing the fsi standalone
 let private _defaultImports: string array = [|
     "#r \"nuget: canopy\""
     "#r \"nuget: Selenium.WebDriver.ChromeDriver\""
@@ -178,7 +180,8 @@ let ProcessCwt (config: TransactionConfiguration) =
 
     let stagingDirFullPath: string = DirectoryInfo(stagingDir).FullName
     let sourcePath: string = FileInfo(config.scriptPath).FullName
-    let sourceScriptDir: option<string> = (bConfig.scriptDirectories 
+    let sourceScriptDir: option<string> = (bConfig.scriptDirs
+        |> List.toArray
         |> Array.filter (fun (csd: string) -> sourcePath.StartsWith(DirectoryInfo(csd).FullName))
         |> Array.tryExactlyOne)
 
@@ -204,7 +207,8 @@ let ProcessFsx (config: TransactionConfiguration) =
 
     let stagingDirFullPath: string = DirectoryInfo(stagingDir).FullName
     let sourcePath: string = FileInfo(config.scriptPath).FullName
-    let sourceScriptDir: option<string> = (bConfig.scriptDirectories 
+    let sourceScriptDir: option<string> = (bConfig.scriptDirs 
+        |> List.toArray
         |> Array.filter (fun (csd: string) -> sourcePath.StartsWith(DirectoryInfo(csd).FullName))
         |> Array.tryExactlyOne)
 
@@ -229,15 +233,19 @@ let ComposeTransaction (path: string) =
     let this: MethodBase = MethodBase.GetCurrentMethod()
 
     // TODO: Build out logic to apply actual directory config, using only default right now
-    let dirConfig: BaseConfiguration = bConfig
+    //let dirConfig: AppConfiguration = bConfig
+    let browserConfigs: BrowserConfiguration list = bConfig.browsers
+    
     let tConfig: TransactionConfiguration = {
         scriptPath = path
         stagedScriptPath = ""  // script not staged yet
-        pollingInterval = dirConfig.pollingInterval
-        browser = dirConfig.browser
-        browserOptions = dirConfig.browserOptions
-        browserDriverDir = dirConfig.browserDriverDir
-        nugetPackages = dirConfig.nugetPackages
+        pollingInterval = bConfig.pollingInterval
+        browser = browserConfigs[0].browser
+        browserOptions = browserConfigs[0].browserOpts |> List.toArray
+        browserDriverDir = browserConfigs[0].driverLocation
+        // TODO: either deprecate or figure out how to use this with the 
+        // standalone fsi 
+        nugetPackages = [||]
     }
 
     match Path.GetExtension(tConfig.scriptPath) with 

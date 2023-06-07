@@ -9,6 +9,7 @@ open System.Security.Cryptography
 
 
 open Logger
+open ConfigTypes
 open Configuration
 open CWeedTransactions
 open TransactionComposer
