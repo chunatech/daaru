@@ -36,10 +36,10 @@ with
     static member Default = {
         BaseConfiguration.scriptDirectories = [| "./scripts" |]
         maxThreadCount = 5
-        pollingInterval = 5
+        pollingInterval = 1
         browser = "chrome"
         browserOptions = [||]
-        browserDriverDir = "bin/Debug/net6.0/" //TODO: PUT THIS BACK CHASE: "/drivers"
+        browserDriverDir = "./drivers"
         nugetPackages = [||]
         logDirName = "logs"
         // logDirPath = DirectoryInfo(".").FullName
@@ -71,7 +71,7 @@ type TransactionConfiguration = {
 module BaseConfiguration = 
     /// default configuration location information. Still subject to location/naming change at this time
     // let defaultBaseConfigurationDir = DirectoryInfo(".").FullName
-    let defaultBaseConfigurationDir: string = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)
+    let defaultBaseConfigurationDir: string = Path.Combine(System.AppContext.BaseDirectory, "config") 
     let defaultBaseConfigurationFilePath: string = Path.Join(defaultBaseConfigurationDir, "settings.cweed.json")
     
     /// this decodes configuration file json to the BaseConfiguration record type. returns a Decoder which 
