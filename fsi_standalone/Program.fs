@@ -18,7 +18,7 @@ let fsi: FsiEvaluationSession =
         // however subsequent args will be.
         // https://github.com/fsharp/fsharp-compiler-docs/issues/877
             let fsiConfig: FsiEvaluationSessionHostConfig = FsiEvaluationSession.GetDefaultConfiguration()
-            let argv: string[] = [| "fsi.exe"; "--noninteractive" |]
+            let argv: string[] = [| "fsi.exe"; "--noninteractive"; "--multiemit-" |]
             FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
     with
     | (ex: exn) ->

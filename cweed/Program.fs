@@ -18,7 +18,7 @@ open Configuration
 //printfn  "%b" File.Exists()
 
 // Set internal global variables
-let fsiSaLocation: string = (Path.Join(System.AppContext.BaseDirectory, "fsi_standalone"))
+let fsiSaLocation: string = (Path.Join(System.AppContext.BaseDirectory, "fsi_standalone/fsi_standalone"))
 let stagingDir: string = "./staging"
 // letBaseConfigLocation: string ""
 
