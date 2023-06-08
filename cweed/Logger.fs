@@ -217,7 +217,7 @@ let RollLogFile () =
 /// write a single entry to the log file. this method will manage opening 
 /// and closing the filestream
 let WriteLogEntryToFile (entry: LogEntry) = 
-    File.AppendAllLinesAsync(logFilePath, [$"%s{entry.ToLogString}"]) |> ignore
+    File.AppendAllLines(logFilePath, [$"%s{entry.ToLogString}"]) 
 
 
 let QueueLogEntry (entry: LogEntry) = 
@@ -237,7 +237,7 @@ let ProcessQueue () =
                     RollLogFile ()
                 //entry.PrintToConsole LogFormat.Unstructured
                 // printfn $"entry at Logger.ProcessQueue: %A{entry}"
-                WriteLogEntryToFile entry 
+                WriteLogEntryToFile entry
             // TODO: Handle this better 
             | _ -> 
                 ()
