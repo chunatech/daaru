@@ -20,6 +20,7 @@ QueueLog (LogLevel.DEBUG) (System.Reflection.MethodBase.GetCurrentMethod()) ($"t
 /// default config file name
 let DefaultConfigurationFileName = "config.json"
 QueueLog (LogLevel.DEBUG) (System.Reflection.MethodBase.GetCurrentMethod()) ($"the value of DefaultConfigurationFileName is %s{DefaultConfigurationFileName}")
+
 /// load a configuration file from a filepath. If the file does not exist, then 
 /// load the default application configuration
 let ConfigurationFromFileOrDefault filepath =
@@ -38,7 +39,7 @@ let ConfigurationFromFileOrDefault filepath =
         QueueLog (LogLevel.DEBUG) (System.Reflection.MethodBase.GetCurrentMethod()) "configuration file contents read. decoding contents..."
         match contents |> Decode.fromString AppConfigurationDecoder with 
             | Ok config -> 
-                QueueLog (LogLevel.DEBUG) (System.Reflection.MethodBase.GetCurrentMethod()) ($"app configuration was decoded successfully, %A{config}")
+                QueueLog (LogLevel.DEBUG) (System.Reflection.MethodBase.GetCurrentMethod()) ($"app configuration was decoded successfully")
                 config
             | Error errstr -> 
                 QueueLog (LogLevel.WARN) (System.Reflection.MethodBase.GetCurrentMethod()) ($"error decoding configuration file at %s{filepath}. %s{errstr}. using defaults")
