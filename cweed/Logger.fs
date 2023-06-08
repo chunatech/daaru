@@ -186,23 +186,7 @@ let logFileName: string =
 let logFilePath = Path.Join(LoggerConfig.location, logFileName)
 
 /// initialize the logger with the settings from the user 
-let InitLogger (config: LoggingConfiguration) = 
-    // for logging purposes
-    let this = MethodBase.GetCurrentMethod()
-    
-    // give logger the settings from the configuration file
-    LoggerConfig <- config
 
-    // directly add to queue here as logger is not fully initialized yet 
-    let log = LogEntry.Create LogLevel.INFO this $"logger settings: %A{LoggerConfig}"
-    LogEntryQueue.Enqueue log
-    
-    // create or locate the log directory
-    let dir = Directory.CreateDirectory(LoggerConfig.location)
-    
-    // directly add to queue here as logger is not fully initialized yet
-    let log = LogEntry.Create LogLevel.INFO this $"creating log directory at {dir} if it does not already exist"
-    LogEntryQueue.Enqueue log
 
 
 /// if true the file is at least of the size specified for roll and should be rolled
@@ -252,6 +236,7 @@ let ProcessQueue () =
                 if IsRollSize () then 
                     RollLogFile ()
                 //entry.PrintToConsole LogFormat.Unstructured
+                // printfn $"entry at Logger.ProcessQueue: %A{entry}"
                 WriteLogEntryToFile entry 
             // TODO: Handle this better 
             | _ -> 
@@ -286,3 +271,24 @@ let WriteLogAndPrintToConsole (level:LogLevel) callerMethod msg =
     // this will process either way as the logger itself queues items
     // directly in certain scenarios
     ProcessQueue ()
+
+let InitLogger (config: LoggingConfiguration) = 
+    // for logging purposes
+    let this = MethodBase.GetCurrentMethod()
+    
+    // give logger the settings from the configuration file
+    LoggerConfig <- config
+
+    // directly add to queue here as logger is not fully initialized yet 
+    let log = LogEntry.Create LogLevel.INFO this $"logger settings: %A{LoggerConfig}"
+    QueueLogEntry log
+
+    // get full path from settings
+    let logDirPath = DirectoryInfo(LoggerConfig.location).FullName
+
+    // pass full path into create directory
+    let dir = Directory.CreateDirectory(logDirPath)
+    
+    // directly add to queue here as logger is not fully initialized yet
+    let log = LogEntry.Create LogLevel.INFO this $"creating log directory at {dir} if it does not already exist"
+    QueueLogEntry log
