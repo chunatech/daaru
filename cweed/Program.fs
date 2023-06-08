@@ -53,7 +53,7 @@ let main (argv: string[]) =
     let this: Reflection.MethodBase = (System.Reflection.MethodBase.GetCurrentMethod())
 
     // Find and read base/default config file
-    let config:  AppConfiguration = ConfigurationFromFileOrDefault (Path.Combine(DefaultConfigurationFileLocation,DefaultConfigurationFileName))
+    let config:  AppConfiguration = ConfigurationFromFileOrDefault (Path.Combine(DefaultConfigurationFileLocation, DefaultConfigurationFileName))
     
     // initialize the transaction composer
     TransactionComposer.Init config stagingDir
