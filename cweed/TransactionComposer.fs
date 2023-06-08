@@ -57,6 +57,9 @@ type PkgLocation =
     | Internal
 
 
+// todo: change this so the cofig is only read once at program start and all the modules take that configuration 
+// or generally the default instead of reading it in at different points. this is the 2nd call, first being the 
+// main file
 let mutable bConfig:  AppConfiguration = ConfigurationFromFileOrDefault (Path.Combine(DefaultConfigurationFileLocation, DefaultConfigurationFileName))
 let mutable stagingDir: string = "./staging"
 
