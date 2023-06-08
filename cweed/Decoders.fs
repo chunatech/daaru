@@ -25,16 +25,16 @@ module ConfigurationDecoders
             {
                 location =
                     get.Optional.Field "location" Decode.string 
-                    |> Option.defaultValue "/logs"
+                    |> Option.defaultValue (LoggingConfiguration.Default()).location
                 rollSize = 
                     get.Optional.Field "rollSize" Decode.int 
-                    |> Option.defaultValue 10
+                    |> Option.defaultValue (LoggingConfiguration.Default()).rollSize
                 format = 
                     get.Optional.Field "format" Decode.string 
-                    |> Option.defaultValue "unstructured"
+                    |> Option.defaultValue (LoggingConfiguration.Default()).format
                 verbosity = 
                     get.Optional.Field "verbosity" Decode.int 
-                    |> Option.defaultValue 1
+                    |> Option.defaultValue (LoggingConfiguration.Default()).verbosity
             }
         )
 
@@ -44,7 +44,7 @@ module ConfigurationDecoders
                 {
                     scriptDirs = 
                         get.Optional.Field "scriptDirectories" (Decode.list Decode.string)
-                        |> Option.defaultValue ["/scripts"]
+                        |> Option.defaultValue ["./scripts"]
                     maxThreadCount = 
                         get.Optional.Field "maxThreadCount" Decode.int
                         |> Option.defaultValue 4
