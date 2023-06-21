@@ -22,3 +22,4 @@ done
 cp -prnv external_resources/default_drivers/* $OUTDIR/drivers/
 cp -prnv external_resources/default_scripts/* $OUTDIR/scripts/
 cp -prnv external_resources/default_libs/* $OUTDIR/libs/
+cp -prnv external_resources/default_config/* $OUTDIR/config/
