@@ -10,11 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-<<<<<<< Updated upstream:fsi_standalone/fsi_standalone.fsproj
-=======
-    <Compile Include="Register.fs" />
-    <Compile Include="Watcher.fs" />
->>>>>>> Stashed changes:cWeed/cWeed.fsproj
     <Compile Include="Program.fs" />
   </ItemGroup>
 
