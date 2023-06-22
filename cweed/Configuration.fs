@@ -4,7 +4,7 @@ open System.IO
 open Thoth.Json.Net
 
 open ConfigTypes
-open ConfigurationDecoders 
+// open ConfigurationDecoders 
 open Logger
 
 (*
@@ -37,7 +37,7 @@ let ConfigurationFromFileOrDefault filepath =
             |> Async.RunSynchronously
 
         QueueLog (LogLevel.DEBUG) (System.Reflection.MethodBase.GetCurrentMethod()) "configuration file contents read. decoding contents..."
-        match contents |> Decode.fromString AppConfigurationDecoder with 
+        match contents |> Decode.fromString AppConfiguration.Decoder with 
             | Ok config -> 
                 QueueLog (LogLevel.DEBUG) (System.Reflection.MethodBase.GetCurrentMethod()) ($"app configuration was decoded successfully")
                 config
