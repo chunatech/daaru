@@ -16,6 +16,7 @@ module Utils =
         /// create a formatted timestamp string
         let CreateTimeStampNow (datetime: DateTime) (fmt: string) = (datetime).ToString(fmt)
 
+
         /// decodes the formatted date time from json. Caller needs to provide 
         /// a fmt string that represents the DateTime valid string fmt used to 
         /// create the encoded DateTime
@@ -35,6 +36,24 @@ module Utils =
             else 
                 (path, BadField("Datetime parsing error", value)) |> Error
   
+        module TimeStamp = 
+            open System 
+            let formatStr = @"yyyyMMdd_HHmmss.fff"
+            type T = TimeStamp of string
+            let value (TimeStamp ts) = ts 
+            let create (dt: DateTime) : T = ((dt).ToString(formatStr)) |> TimeStamp
+            let tryParse (TimeStamp ts) : Result<DateTime, string> = 
+
+                let tryDate = DateTime.TryParseExact(
+                    ts, 
+                    formatStr, 
+                    Globalization.CultureInfo.InvariantCulture,
+                    Globalization.DateTimeStyles.None
+                )
+
+                match tryDate with 
+                | (true, dt) -> dt |> Ok 
+                | _ -> $"TimeStamp.tryParse() error parsing value %s{ts}" |> Error
 
 
     module CsvTools = 
