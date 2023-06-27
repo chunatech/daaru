@@ -54,7 +54,7 @@ logs | optional | This is the settings for the logger, such as location of the l
 {
     "browser": "chrome",
     "browserOpts": ["someOpt"],
-    "driverLocation": ""
+    "driverLocation": "/path/to/driver/directory"
 }
 ```
 <br />
@@ -77,7 +77,7 @@ at this time only chrome is supported but future releases intend to support mult
 
 ```json
 "logs": {
-    "location": "",
+    "location": "/path/to/log/directory",
     "rollSize": 10,
     "format": "unformatted",
     "verbosity": 0

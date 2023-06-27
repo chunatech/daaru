@@ -7,7 +7,7 @@ open canopy.runner.classic
 open canopy.configuration
 open canopy.classic
 
-canopy.configuration.chromeDir <- "/home/chase/Development/f_sharp/cweed/build/release/linux-x64/drivers"
+canopy.configuration.chromeDir <- ""
 
 //start an instance of selected browser
 let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()

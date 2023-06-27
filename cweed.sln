@@ -1,0 +1,62 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{22E25745-A907-4D9E-81D7-8C27E07022A4}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed", "src\cweed\cweed.fsproj", "{FFFD3683-97D5-4240-A3E2-7FFEAD9E3722}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Configuration", "src\cweed.Configuration\cweed.Configuration.fsproj", "{BF5B7863-1FF6-4717-BF3C-0155982D64A7}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Utils", "src\cweed.Utils\cweed.Utils.fsproj", "{04ACF0D4-707F-4A79-89F3-F384A9822C75}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Logger", "src\cweed.Logger\cweed.Logger.fsproj", "{6DAD7C0B-FA43-4143-90E7-E312BC36DA5F}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Transactions", "src\cweed.Transactions\cweed.Transactions.fsproj", "{214FEF3C-FF45-4006-B740-AC449DDAD64D}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "fsi_standalone", "src\fsi_standalone\fsi_standalone.fsproj", "{9057DB75-15C2-4E2F-A919-C9FFA175C00E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FFFD3683-97D5-4240-A3E2-7FFEAD9E3722}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFFD3683-97D5-4240-A3E2-7FFEAD9E3722}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFFD3683-97D5-4240-A3E2-7FFEAD9E3722}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFFD3683-97D5-4240-A3E2-7FFEAD9E3722}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF5B7863-1FF6-4717-BF3C-0155982D64A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF5B7863-1FF6-4717-BF3C-0155982D64A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF5B7863-1FF6-4717-BF3C-0155982D64A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF5B7863-1FF6-4717-BF3C-0155982D64A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04ACF0D4-707F-4A79-89F3-F384A9822C75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04ACF0D4-707F-4A79-89F3-F384A9822C75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04ACF0D4-707F-4A79-89F3-F384A9822C75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04ACF0D4-707F-4A79-89F3-F384A9822C75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DAD7C0B-FA43-4143-90E7-E312BC36DA5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DAD7C0B-FA43-4143-90E7-E312BC36DA5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DAD7C0B-FA43-4143-90E7-E312BC36DA5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DAD7C0B-FA43-4143-90E7-E312BC36DA5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{214FEF3C-FF45-4006-B740-AC449DDAD64D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{214FEF3C-FF45-4006-B740-AC449DDAD64D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{214FEF3C-FF45-4006-B740-AC449DDAD64D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{214FEF3C-FF45-4006-B740-AC449DDAD64D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9057DB75-15C2-4E2F-A919-C9FFA175C00E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9057DB75-15C2-4E2F-A919-C9FFA175C00E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9057DB75-15C2-4E2F-A919-C9FFA175C00E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9057DB75-15C2-4E2F-A919-C9FFA175C00E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FFFD3683-97D5-4240-A3E2-7FFEAD9E3722} = {22E25745-A907-4D9E-81D7-8C27E07022A4}
+		{BF5B7863-1FF6-4717-BF3C-0155982D64A7} = {22E25745-A907-4D9E-81D7-8C27E07022A4}
+		{04ACF0D4-707F-4A79-89F3-F384A9822C75} = {22E25745-A907-4D9E-81D7-8C27E07022A4}
+		{6DAD7C0B-FA43-4143-90E7-E312BC36DA5F} = {22E25745-A907-4D9E-81D7-8C27E07022A4}
+		{214FEF3C-FF45-4006-B740-AC449DDAD64D} = {22E25745-A907-4D9E-81D7-8C27E07022A4}
+		{9057DB75-15C2-4E2F-A919-C9FFA175C00E} = {22E25745-A907-4D9E-81D7-8C27E07022A4}
+	EndGlobalSection
+EndGlobal
