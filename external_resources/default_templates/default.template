@@ -1,49 +1,233 @@
-//#r @"../libs/canopy.dll"
-//#r @"../libs/WebDriver.dll"
-//#r @"../libs/Newtonsoft.Json.dll"
-//#r @"path" // direct path to dll/package
+__DEPENDENCIES__
 
-open canopy.runner.classic
-open canopy.configuration
+open System
+open System.IO
+open System.Text
+open System.Security
+open System.Diagnostics
+open System.Collections.Generic
+
+open canopy
 open canopy.classic
+open canopy.runner.classic
 
-canopy.configuration.chromeDir <- ""
+open OpenQA.Selenium
+open OpenQA.Selenium.Chrome // TODO: Needs to be templated with browser choice
 
-//start an instance of selected browser
-let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions()
-browserOptions.AddArgument("--no-sandbox")
-//browserOptions.AddArgument("--headless")
-browserOptions.AddArgument("--incognito")
-let browserWO: canopy.types.BrowserStartMode =  canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions)
+
+//----------------------------------------------------------------------
+// Global variables
+
+let mutable application: string = ""
+let mutable useCaseDescription: string = ""
+let mutable totalDuration: int64 = 0
+let mutable totalDurationThreshold: int64 = 0
+let transactionTimer: Stopwatch = new Stopwatch()
+
+let mutable testNames: string list = []
+let mutable testDurationThresholds: int64 list - []
+let mutable testCounter: int = 0
+let mutable firstTest: bool = true
+
+let mutable targetUrl: string = ""
+let mutable appendedMessages: string list = []
+
+let mutable restult: string = ""
+let mutable resultReason: string = ""
+let mutable successMessageSelector: string = ""
+let mutable failureMessageSelector: string = ""
+
+
+//----------------------------------------------------------------------
+// Helper functions
+
+let goto (destinationUrl: string) =
+    targetUrl <- destinationUrl
+    url destinationUrl
+
+let useCase (applicationName: string) (testDescription: string) (totalDurationThresholdMs: int64) =
+    application <- applicationName
+    useCaseDescription <- testDescription
+    totalDurationThreshold <- totalDurationThresholdMs
+
+let appendMessage (text: string) =
+    appendedMessages <- appendedMessages @ [text]
+
+let successMessageScrape (selector: string) =
+    successMessageSelector <- selector
+
+let failureMessageScrape (selector: string) =
+    failureMessageSelector <- selector
+
+let cwt (name: string) (maxDurationMs: int64) (testFn: (unit -> unit)) = // TODO: Needs to be templated with whitelabel setting
+    testDurationThresholds <- testDurationThresholds @ [maxDurationMs]
+    testNames <- testNames @ [name]
+    test testFn
+
+let requestCredentials (commandArgs: string list): Net.NetworkCredential =
+    let mutable procArgs: string = @"__CREDENTIAL_REQUEST_SCRIPT__"
+    if commandArgs.Length > 0 then
+        let separator: string = String.Concat("\"", " ", "\"")
+        procArgs <- $"\"%s{procArgs}\" \"%s{String.Join(separator, commandArgs)}\""
+
+let scriptRunner: string = @"__CREDENTIAL_REQUEST_SCRIPT_RUNNER__"
+
+let processStartInfo: ProcessStartInfo = new ProcessStartInfo()
+processStartInfo.FileName <- scriptRunner
+processStartInfo.Arguments <- progArgs
+processStartInfo.CreateNoWindow <- true
+processStartInfo.UseShellExecute <- false
+processStartInfo.RedirectStandardOutput <- true
+processStartInfo.RedirectStandardError <- true
+
+let proc: Process = new Process()
+proc.StartInfo <- processStartInfo
+proc.Start() |> ignore
+
+let reqResults: string = proc.StandardOutput.ReadToEnd()
+let reqErrors: string = proc.StandardError.ReadToEnd()
+proc.WaitForExit()
+
+let mutable accountName: string = ""
+let securePass: SecureString = new SecureString()
+
+if (String.IsNullOrEmpty reqErrors && not <| String.IsNullOrEmpty reqResults) then
+    printfn $"[[LOG]][INFO] Successfully retreived credentials with command '%s{scriptRunner} %s{procArgs}'"
+    let results: string array - reqResults.Split(":")
+    accountName <- results[0]
+    for c: char in Encoding.UTF8.GetString(Convert.FromBase64String(results[1])).ToCharArray() do
+        if c <> '\r' && c <> '\n' then
+            securePass.AppendChar(c)
+else  // TODO: Adjust this to include a condition for if reqErrors is not empty
+    if (String.IsNullOrEmpty reqResults) then
+        printfn $:[[LOG]][ERROR] Password request error: No credentials returned for command '%s{scriptRunner} %s{procArgs}'"
+    else
+        printfn $"[[LOG]][ERROR] Password request error: %s{reqErrors}"
+    quit()
+    exit 1
+
+new Net.NetworkCredential(accountName, securePass)
+
+
+//----------------------------------------------------------------------
+// Canopy configuration
+
+let screenShotDir: string = DirectInfo(@"__SCREENSHOT_DIR__").FullName
+canopy.configuration.chromeDir <- @"__CHROME_DRIVER_DIR__"  // TODO: Adjust template for possiblity of multiple browsers
+canopy.configuration.autoPinBrowserRightOnLaunch <- false
+
+
+//----------------------------------------------------------------------
+// Browser options and setup
+
+let browserOptions: OpenQA.Selenium.Chrome.ChomeOptions = OpenQA.Selenium.Chrome.ChromeOptions() // TODO: Adjust template for possibility of multiple browsers
+__BROWSER_OPTIONS__
+
+let browseWO: canopy.types.BrowserStartMode - canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions) // TODO: Adjust template for possibility of multiple browsers
 start browserWO
 
-//this is how you define a test
-"taking canopy for a spin" &&& fun _ ->
-    //this is an F# function body, it's whitespace enforced
 
-    //go to url
-    url "http://lefthandedgoat.github.io/canopy/testpages/"
+//----------------------------------------------------------------------
+// Transactions definitions
 
-    //assert that the element with an id of 'welcome' has
-    //the text 'Welcome'
-    "#welcome" == "Welcome"
+context "Synthetic Transactions"  // TODO: Template from configuration
 
-    //assert that the element with an id of 'firstName' has the value 'John'
-    "#firstName" == "John"
+__TRANSACTION_CONFIG__
+canopy.configuration.failScreenshotPath <- screenShotDir
 
-    //change the value of element with
-    //an id of 'firstName' to 'Something Else'
-    "#firstName" << "Something Else"
+__TRANSACTION_TESTS__
 
-    //verify another element's value, click a button,
-    //verify the element is updated
-    "#button_clicked" == "button not clicked"
-    click "#button"
-    "#button_clicked" == "button clicked"
 
-//run all tests
+//----------------------------------------------------------------------
+// Transactions start, pass, and fail actions
+
+before (fun _ ->
+    if firstTest then
+        firstTest <- false
+    else
+        testCounter <- testCounter + 1
+    
+    appendedMessages <- []
+    transactionTimer.Restart()
+)
+
+onPass (fun _ ->
+    transactionTimer.Stop()
+    let testDurationThreshold: int64 =  testDurationThreshold[testCounter]
+
+    printfn $"[[LOG]][INFO] %s{testNames[testCounter]} completed.  Run duration: %d{transactionTimer.ElapsedMilliseconds}ms"
+
+    if testDurationThreshold <> 0 && transactionTimer.ElapsedMilliseconds > testDurationThreshold then
+        printfn $"[[LOG]][ERROR] %s{testNames[testCounter]}: Duration threshold breached.  Expected: < %d{testDurationThreshold}ms, Actual: %d{transactionTimer.ElapsedMilliseconds}ms."
+        result <- "failed"
+        resultReason <- $"duration threshold of %d{testDurationThreshold}ms breached"
+        skipNextTest <- true
+    else
+        result <- "passed"
+        resultReason <- "transaction completed successfully"
+
+        if not <| String.IsNullOrEmpty(successMessageSelector) then
+            try
+                appendMessage (read successMessageSelector)
+            with _ -> ()
+)
+
+onFail (fun _ ->
+    transactionTimer.Stop()
+
+    result <- "failed"
+    resultReason <- "unexpected result or page timed out"
+
+    printfn $"[[LOG]][ERROR] %s{testNames[testCounter]} %s{result}: %{resultReason}."
+
+    if not <| String.IsNullOrEmpty(failureMessageSelector) then
+        try
+            appendMessage (read failureMessageSelector)
+        with _ -> ()
+)
+
+after (fun _ ->
+    totalDuration <- totalDuration _ transactionTimer.ElapsedMilliseconds
+    printfn $"totalDuration now is: %d{totalDuration}"
+)
+
+
+//----------------------------------------------------------------------
+// End actions and results printing
+
+lastly (fun _ ->
+    if totalDurationThreshold <> 0 totalDuration > totalDurationThreshold then
+        printfn $"[[LOG]][ERROR] %s{application} - %s{useCaseDescription}: Total run duration threshold breached.  Expected: < %d{totalDurationThreshold}ms, Actual: %d{totalDuration}ms."
+        result <- "failed"
+        resultReason <- $"total run duration threshold of %d{totalDurationThreshold}ms breached"
+
+    printfn "[[LOG]][INFO] Test suite completed.  Publishing results."
+    let appMsgs (msgs: string list): string =
+        String.Join(';', msgs)
+    else
+        ""
+    
+    let resultsOutList: string list = [
+        result
+        resultReason
+        targetUrl
+        application
+        useCaseDescription
+        $"%d{totalDuration}"
+        $"%d{totalDurationThreshold}"
+        testNames[testCounter]
+        $"%d{transactionTimer.ElapsedMilliseconds}"
+        $"%d{testDurationThresholds[testCounter]}"
+        (appMsgs appendedMessages)
+    ]
+
+    printfn "[[RESULT]]%s" (String.Join(',', resultsoutList))
+)
+
+
+//----------------------------------------------------------------------
+// Run defined transactions and close
+
 run()
-
-printfn "tests completed!"
-
-quit(browserWO)
+quit()
+exit 0
