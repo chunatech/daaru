@@ -36,6 +36,7 @@ module Utils =
             else 
                 (path, BadField("Datetime parsing error", value)) |> Error
   
+        /// module for timestamp creation that can parse a ts from the format str
         module TimeStamp = 
             open System 
             let formatStr = @"yyyyMMdd_HHmmss.fff"
