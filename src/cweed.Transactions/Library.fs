@@ -183,6 +183,64 @@ module CwTransactions =
                 footer;
             ])
 
+        let rec private _buildFromTemplate (tConfig: TransactionConfiguration) (template: string list) (result: string list) = 
+                        match template with 
+                        | [] -> result
+                        | line::lines -> 
+                            match line with 
+                            // add the #r statements here
+                            | "__DEPENDENCIES__" ->
+                                _buildFromTemplate tConfig lines result @ (_defaultImports |> Array.toList)
+
+                            // TODO: add to app config 
+                            | line when line.Contains("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__") -> 
+                                let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", "/path/to/creds/script")
+                                _buildFromTemplate tConfig lines result @ ([line'])
+
+                            // TODO: add to app config
+                            | line when line.Contains("__CREDENTIAL_REQUEST_SCRIPT__") ->                                 
+                                let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", "/path/to/creds/runner")
+                                _buildFromTemplate tConfig lines result @ ([line'])
+                            
+                            // TODO: add to app config
+                            | line when line.Contains("__SCREENSHOT_DIR__") -> 
+                                let line' = line.Replace("__SCREENSHOT_DIR__", "/path/to/screenshots/directory")    
+                                _buildFromTemplate tConfig lines result @ ([line'])
+
+                            // template the browser options from the tConfig in here
+                            | line when line.Contains("__BROWSER_OPTIONS__") -> 
+                                let mutable opts: string list = []
+                                for opt in (tConfig.browserOptions) do 
+                                    opts <- $"browserOptions.AddArgument(\"--%s{opt}\")"::opts
+
+                                _buildFromTemplate tConfig lines result @ opts
+                            
+                            // TODO: 
+                            // ADD TRANSACTION CONFIG 
+                            // ADD TRANSACTION TESTS 
+                            // ADD LOGGER LINES PARSING 
+                            // ADD RESULTS PARSING 
+
+                            // an oridinary line 
+                            | _ -> _buildFromTemplate tConfig lines result @ [line]
+
+        let private _processCwtFromTemplate (tConfig) : option<TransactionConfiguration> = 
+            // first read in template. currenltly only supporting default template. if this can't be read in then exit the program we 
+            // wont be able to construct any scripts.
+            let templateContents = 
+                try File.ReadAllLines(Path.Join(templatesDir, "default.template")) |> Array.toList
+                with exn -> 
+                    LogWriter.writeLogAndPrintToConsole (MethodBase.GetCurrentMethod()) LogLevel.ERROR $"%s{exn.Message}"
+                    exit 0
+            
+            let result = 
+                _buildFromTemplate tConfig templateContents []
+
+            // TODO add some config with staged filepath
+            None
+
+
+
         // set up and copy fsx files into staging. return updated transaction configuration
         let private _processFsx (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
             let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
