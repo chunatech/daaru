@@ -105,17 +105,26 @@ module CwTransactions =
     /// eventually custom extensions
     module TransactionBuilder = 
 
+        // instance of the app configuration being used. initialized with the 
+        // default. init fn provides the user config at runtime
         let mutable private _config: AppConfiguration = AppConfiguration.Default
 
+        /// internal staging directory. this is where cweed stages the built  
+        /// scripts that are actually run by the transaction runner
         let mutable stagingDir: string = Path.Join(System.AppContext.BaseDirectory, "staging")
+        
+        /// this directory is where the templates are located. a default template is provided at this time. 
+        let templatesDir: string = Path.Join(AppContext.BaseDirectory, "templates")
 
+        // these are required dlls for use in the transaction file
         let private _defaultImports = 
             [|
                 "/libs/canopy.dll";
                 "/libs/Newtonsoft.Json.dll";
                 "/libs/WebDriver.dll";
             |] 
-            |> Array.map (fun p -> $"#r \"%s{(Path.Join(System.AppContext.BaseDirectory,p))}\"")
+            |> Array.map (fun p -> $"#r @\"%s{(Path.Join(System.AppContext.BaseDirectory,p))}\"")
+            
 
 
         // array containing the default open statements in the "header" section
@@ -587,7 +596,7 @@ module CwTransactions =
         // TODO: Need to enhance this method to check if secure mode is enabled.  If so
         //       it needs to also check the .authorized directory.
         let registerExistingScripts (confDirs: string array) =
-            let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
+            let this: Reflection.MethodBase = MethodBase.GetCurrentMethod()
             let mutable scriptPaths: string array = [||]
             for dir: string in confDirs do
                 
