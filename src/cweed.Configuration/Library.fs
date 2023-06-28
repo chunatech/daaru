@@ -43,27 +43,45 @@ module AppConfiguration =
     /// "parent" configuration also holds the settings
     /// for the logs and browsers configured
     type AppConfiguration = { 
+        /// list of directories that hold scripts to be run 
         scriptDirs: string list
+        /// base directory of screenshots
+        screenshotDirPath: string
+        /// max threads that cweed transaction runner will use 
+        /// to run transactions in parallel 
         maxThreadCount: int
+        /// how frequently cweed will poll for transactions to 
+        /// run 
         pollingInterval: int
+        /// configuration options for the logger. see logging module for 
+        /// details  
         logs: LoggingConfiguration
+        /// list of browsers to use with their respective browser options and 
+        /// driver locations 
         browsers: BrowserConfiguration list 
     } with
+        /// default implementation of the application configuration. This configuration 
+        /// will be used in the event of cweed being unable to locate the users configs
 
         static member Default = { 
             scriptDirs = [ (Path.Join(System.AppContext.BaseDirectory, "scripts")) ]
+            screenshotDirPath =  (Path.Join(System.AppContext.BaseDirectory, "screenshots")) 
             maxThreadCount = 4
             pollingInterval = 5
             logs = LoggingConfiguration.Default
             browsers = [ BrowserConfiguration.Default ] 
         }
 
+        /// decodes the json configuration from the user 
         static member Decoder: Decoder<AppConfiguration> =
             Decode.object (fun get ->
                 { 
                     scriptDirs =
                         get.Optional.Field "scriptDirectories" (Decode.list Decode.string)
                         |> Option.defaultValue AppConfiguration.Default.scriptDirs
+                    screenshotDirPath = 
+                        get.Optional.Field "screenshotDirectory" (Decode.string)
+                        |> Option.defaultValue AppConfiguration.Default.screenshotDirPath
                     maxThreadCount = 
                         get.Optional.Field "maxThreadCount" Decode.int |> Option.defaultValue 4
                     pollingInterval = 
