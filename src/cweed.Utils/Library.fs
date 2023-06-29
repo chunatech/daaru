@@ -1,9 +1,11 @@
 ﻿namespace cweed
 
 module Utils = 
+    open Thoth.Json.Net
+    open System.IO
+
     module DateTimeHandlers = 
         open System
-        open Thoth.Json.Net
 
         /// formatter for DateTime obj that is specified to the milisecond 
         /// for use with timestamps in LogEntry
@@ -115,3 +117,31 @@ module Utils =
                     System.IO.File.AppendAllLines(fullPath, [r]) |> Ok
                 with (exn: exn) -> 
                     Error exn.Message
+
+
+    module FilePathDecoder =
+        let Decoder: Decoder<string> = 
+            fun (path) (value: JsonValue) -> 
+                let v: Newtonsoft.Json.Linq.JValue = unbox value  
+                // if the filepath given is malformed, return an error 
+                if not <| (System.Uri.IsWellFormedUriString(v.ToString(), System.UriKind.RelativeOrAbsolute)) then
+                    Error <| (path, BadPrimitive("malformed filepath", value))
+
+                // if the neither file nor directory specified in this path exist, return an error 
+                else if (not <| File.Exists(v.ToString())) then 
+                    Error <| (path, BadType("file not found", value))
+                // this is should be a located, valid path
+                else v.ToString() |> Ok
+
+    module DirPathDecoder = 
+        let Decoder: Decoder<string> = 
+            fun (path) (value: JsonValue) -> 
+                let v: Newtonsoft.Json.Linq.JValue = unbox value  
+                let dirpath: string = v.ToString()
+                // if the filepath given is malformed, return an error 
+                if  (not <| (System.Uri.IsWellFormedUriString(dirpath, System.UriKind.RelativeOrAbsolute))) || 
+                    (not <| Directory.Exists(dirpath)) 
+                then
+                    Error <| (path, BadType("valid relative or absolute path", value))
+                // if the neither file nor directory specified in this path exist, return an error
+                else dirpath |> Ok
