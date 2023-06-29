@@ -73,6 +73,23 @@ at this time only chrome is supported but future releases intend to support mult
 
 <br />
 
+## Credentials Script configuration 
+
+cweed can be configured to handle a user generated credentials script.  support for this script is in the default template file. 
+the configuration of this feature is done through the `config.json` file and looks as follows: 
+
+```json 
+"credentialsRequestScript": {
+	"credScriptPath": "/path/to/the/script.ext",
+	"credRunnerPath": "/path/to/the/script/runner" 
+}
+```
+
+**Including a credentials script configuration is optional; however if included, both fields are required and the program will crash if the paths received are invalid. Absolute paths are preferred**
+
+<br />
+
+
 ## Logger Configuration Options
 
 ```json
