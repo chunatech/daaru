@@ -36,6 +36,20 @@ module AppConfiguration =
                 }
             )
 
+
+    /// user defined credentials script 
+    type CredentialsRequestScriptConfiguration = {
+        credScriptPath: string
+        credRunnerPath: string
+    } 
+    with 
+        static member Decoder: Decoder<CredentialsRequestScriptConfiguration> = 
+            Decode.object(fun get -> 
+                {
+                    credScriptPath = get.Required.Field "credScriptPath" Decode.string
+                    credRunnerPath = get.Required.Field "credRunnerPath" Decode.string
+                }
+            )
     
 
     /// this is the overall application configuration. Any
@@ -59,6 +73,13 @@ module AppConfiguration =
         /// list of browsers to use with their respective browser options and 
         /// driver locations 
         browsers: BrowserConfiguration list 
+
+        /// user defined credentials request script for use in transactions
+        /// with the default template. If this is not specified by the user, it 
+        /// will be ignored with the assumption that the user isn't going to use that 
+        /// functionality. However, if included, the paths for the script and runner 
+        /// are both required and will be validated prior to configuration acceptance
+        credentialsRequestScript: CredentialsRequestScriptConfiguration option 
     } with
         /// default implementation of the application configuration. This configuration 
         /// will be used in the event of cweed being unable to locate the users configs
@@ -70,6 +91,7 @@ module AppConfiguration =
             pollingInterval = 5
             logs = LoggingConfiguration.Default
             browsers = [ BrowserConfiguration.Default ] 
+            credentialsRequestScript = None
         }
 
         /// decodes the json configuration from the user 
@@ -92,6 +114,8 @@ module AppConfiguration =
                     browsers =
                         get.Optional.Field "browsers" (Decode.list BrowserConfiguration.Decoder)
                         |> Option.defaultValue AppConfiguration.Default.browsers 
+                    credentialsRequestScript = 
+                        get.Optional.Field "credentialsRequestScript" (CredentialsRequestScriptConfiguration.Decoder)
                 }
             )
 
