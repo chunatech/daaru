@@ -16,7 +16,7 @@ rm -rf fsi_standalone/obj
 dotnet publish ./src/cweed/cweed.fsproj -c Release -r $1 -o $OUTDIR --self-contained && \
 dotnet publish ./src/fsi_standalone/fsi_standalone.fsproj -c Release -r $1 -o $OUTDIR/fsi_standalone --self-contained && \
 
-for d in config logs results scripts staging drivers libs screenshots; do
+for d in config logs results scripts staging drivers libs screenshots templates; do
     [ ! -d $OUTDIR/$d ] && mkdir $OUTDIR/$d && echo "Created dir ${OUTDIR}/${d}"
 done
 
@@ -24,3 +24,4 @@ cp -prnv external_resources/default_drivers/* $OUTDIR/drivers/
 cp -prnv external_resources/default_scripts/* $OUTDIR/scripts/
 cp -prnv external_resources/default_libs/* $OUTDIR/libs/
 cp -prnv external_resources/default_config/* $OUTDIR/config/
+cp -prnv external_resources/default_templates/* $OUTDIR/templates/
