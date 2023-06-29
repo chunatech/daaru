@@ -136,7 +136,14 @@ module AppConfiguration =
                 | Ok config -> 
                     let infoLog = LogWriter.writeLog (System.Reflection.MethodBase.GetCurrentMethod()) LogLevel.INFO
                     infoLog $"configuration decoded from successfully: {config}"
-                    config
+                    match config.credentialsRequestScript with 
+                    // validate credential runner path 
+                    | Some creds -> 
+                        if (not <| File.Exists(creds.credScriptPath)) || (not <| File.Exists(creds.credRunnerPath)) then 
+                            LogWriter.writeLogAndPrintToConsole (System.Reflection.MethodBase.GetCurrentMethod()) (LogLevel.ERROR) $"invalid credential runner path or credential script path %A{creds}"
+                            exit 1
+                        else config
+                    | None -> config 
                 | Error errstr -> 
                     let warnLog = LogWriter.writeLog (System.Reflection.MethodBase.GetCurrentMethod()) LogLevel.WARN 
                     warnLog errstr
