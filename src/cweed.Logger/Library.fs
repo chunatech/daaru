@@ -227,7 +227,7 @@ module Logger =
                         else
                             let logs: Result<LogEntry list, string> = 
 
-                                File.ReadAllText(Path.Join(_logFileLocation, "cweed.log.json"))
+                                File.ReadAllText(jsonFilepath)
                                 |> Decode.Auto.fromString
 
                             match logs with 
@@ -238,7 +238,7 @@ module Logger =
                                 let last = e.Split(' ') |> Enumerable.Last
                                 match last with 
                                 | "null" -> 
-                                     [entry] |> _writeJsonLog
+                                        [entry] |> _writeJsonLog
                                 | _ -> 
                                     printfn "%s" e
 
@@ -282,10 +282,6 @@ module Logger =
             // make sure the log directory exists
             Directory.CreateDirectory(DirectoryInfo(_config.location).FullName) 
             |> ignore
-
-            // make sure the log file exists here
-            if File.Exists(Path.Join(_logFileLocation, _logFileName)) |> not then 
-                File.Create(Path.Join(_logFileLocation, _logFileName)) |> ignore
 
             _processLogEntryQueue()
             ()
