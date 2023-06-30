@@ -300,29 +300,6 @@ module CwTransactions =
             { tConfig with stagedScriptPath = stagingFilePath }
             |> Some
 
-        // build the fsx file and create it in the staging directory. return the updated transaction
-        // configuration
-        let private _processCwt (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
-            let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
-            let sourceDir: string = Path.GetDirectoryName(sourcePath)
-            
-            // build the fsx
-            let testFileContent = _buildTransactionFileContents tConfig
-
-            // create the path for the staging file
-            let stagingFilePath = sourcePath.Replace(sourceDir, stagingDir).Replace(".cwt", ".fsx")
-            let targetStagingDir = Path.GetDirectoryName(stagingFilePath)
-
-            // create staging directory mirror of target script
-            Directory.CreateDirectory targetStagingDir 
-            |> ignore
-
-            // create the fsx
-            File.WriteAllLines(stagingFilePath, testFileContent)
-
-            // return the config
-            { tConfig with stagedScriptPath = stagingFilePath }
-            |> Some
 
 
         /// initialize the transaction processer with a copy of the app configuration
