@@ -119,9 +119,9 @@ module CwTransactions =
         // these are required dlls for use in the transaction file
         let private _defaultImports = 
             [|
-                "/libs/canopy.dll";
-                "/libs/Newtonsoft.Json.dll";
-                "/libs/WebDriver.dll";
+                "libs/canopy.dll";
+                "libs/Newtonsoft.Json.dll";
+                "libs/WebDriver.dll";
             |] 
             |> Array.map (fun p -> $"#r @\"%s{(Path.Join(System.AppContext.BaseDirectory,p))}\"")
             
@@ -192,29 +192,50 @@ module CwTransactions =
                             | "__DEPENDENCIES__" ->
                                 _buildFromTemplate tConfig lines result @ (_defaultImports |> Array.toList)
 
-                            // TODO: add to app config 
-                            | line when line.Contains("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__") -> 
-                                let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", "/path/to/creds/script")
-                                _buildFromTemplate tConfig lines result @ ([line'])
+                            | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__") -> 
+                                match _config.credentialsRequestScript with 
+                                | Some (cfg: CredentialsRequestScriptConfiguration) -> 
+                                    let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", cfg.credRunnerPath)
+                                    _buildFromTemplate tConfig lines result @ ([line'])
+                                | None -> 
+                                    let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", "")
+                                    _buildFromTemplate tConfig lines result @ ([line'])
 
-                            // TODO: add to app config
-                            | line when line.Contains("__CREDENTIAL_REQUEST_SCRIPT__") ->                                 
-                                let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", "/path/to/creds/runner")
-                                _buildFromTemplate tConfig lines result @ ([line'])
+                            | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT__") ->
+                                match _config.credentialsRequestScript with 
+                                | Some (cfg: CredentialsRequestScriptConfiguration) -> 
+                                    let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", cfg.credScriptPath)
+                                    _buildFromTemplate tConfig lines result @ ([line'])
+                                | None -> 
+                                    let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", "")
+                                    _buildFromTemplate tConfig lines result @ [line']                                
                             
-                            // TODO: add to app config
-                            | line when line.Contains("__SCREENSHOT_DIR__") -> 
-                                let line' = line.Replace("__SCREENSHOT_DIR__", "/path/to/screenshots/directory")    
+                            | (line: string) when line.Contains("__SCREENSHOT_DIR__") -> 
+                                let line': string = line.Replace("__SCREENSHOT_DIR__", _config.screenshotDirPath)
                                 _buildFromTemplate tConfig lines result @ ([line'])
 
-                            // template the browser options from the tConfig in here
-                            | line when line.Contains("__BROWSER_OPTIONS__") -> 
+
+                            | (line: string) when line.Contains("__CHROME_DRIVER_DIR__") -> 
+                                let line': string = line.Replace("__CHROME_DRIVER_DIR__", tConfig.browserDriverDir)
+                                _buildFromTemplate tConfig lines result @ ([line'])
+
+
+                            | (line: string) when line.Contains("__BROWSER_OPTIONS__") -> 
                                 let mutable opts: string list = []
-                                for opt in (tConfig.browserOptions) do 
+                                for opt: string in (tConfig.browserOptions) do 
                                     opts <- $"browserOptions.AddArgument(\"--%s{opt}\")"::opts
 
                                 _buildFromTemplate tConfig lines result @ opts
                             
+                            // TODO: add functionality for this configuration. talk to chase
+                            | (line: string) when line.Contains("__TRANSACTION_CONFIG__") -> 
+                                _buildFromTemplate tConfig lines result
+
+
+                            | (line: string) when line.Contains("__TRANSACTION_TESTS__") -> 
+                                let cwt: string list = File.ReadAllLines(tConfig.scriptPath) |> Array.toList
+                                _buildFromTemplate tConfig lines result @ cwt
+
                             // TODO: 
                             // ADD TRANSACTION CONFIG 
                             // ADD TRANSACTION TESTS 
@@ -225,19 +246,36 @@ module CwTransactions =
                             | _ -> _buildFromTemplate tConfig lines result @ [line]
 
         let private _processCwtFromTemplate (tConfig) : option<TransactionConfiguration> = 
+            let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
+            let sourceDir: string = Path.GetDirectoryName(sourcePath)
+            
+            // create the path for the staging file
+            let stagingFilePath = sourcePath.Replace(sourceDir, stagingDir).Replace(".cwt", ".fsx")
+            let targetStagingDir = Path.GetDirectoryName(stagingFilePath)
             // first read in template. currenltly only supporting default template. if this can't be read in then exit the program we 
             // wont be able to construct any scripts.
             let templateContents = 
-                try File.ReadAllLines(Path.Join(templatesDir, "default.template")) |> Array.toList
+                try File.ReadAllLines(Path.Join(templatesDir, "default.template")) 
                 with exn -> 
                     LogWriter.writeLogAndPrintToConsole (MethodBase.GetCurrentMethod()) LogLevel.ERROR $"%s{exn.Message}"
                     exit 0
-            
+            let templateContents' = templateContents
+            templateContents' |> Array.Reverse
+
+
             let result = 
-                _buildFromTemplate tConfig templateContents []
+                _buildFromTemplate tConfig (templateContents' |> Array.toList) []
+
+            // create staging directory mirror of target script
+            Directory.CreateDirectory targetStagingDir 
+            |> ignore
+
+            // create the fsx
+            File.WriteAllLines(stagingFilePath, result)
 
             // TODO add some config with staged filepath
-            None
+            ({ tConfig with stagedScriptPath = stagingFilePath })
+            |> Some
 
 
 
@@ -311,7 +349,7 @@ module CwTransactions =
             // run the processing fn based on ext type
             match Path.GetExtension(tConfig.scriptPath) with 
             | ".fsx" -> _processFsx tConfig 
-            | ".cwt" -> _processCwt tConfig
+            | ".cwt" -> _processCwtFromTemplate tConfig
             | _ -> 
                 LogWriter.writeLog 
                     (MethodBase.GetCurrentMethod())

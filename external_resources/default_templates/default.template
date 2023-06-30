@@ -25,14 +25,14 @@ let mutable totalDurationThreshold: int64 = 0
 let transactionTimer: Stopwatch = new Stopwatch()
 
 let mutable testNames: string list = []
-let mutable testDurationThresholds: int64 list - []
+let mutable testDurationThresholds: int64 list = []
 let mutable testCounter: int = 0
 let mutable firstTest: bool = true
 
 let mutable targetUrl: string = ""
 let mutable appendedMessages: string list = []
 
-let mutable restult: string = ""
+let mutable result: string = ""
 let mutable resultReason: string = ""
 let mutable successMessageSelector: string = ""
 let mutable failureMessageSelector: string = ""
@@ -70,49 +70,47 @@ let requestCredentials (commandArgs: string list): Net.NetworkCredential =
         let separator: string = String.Concat("\"", " ", "\"")
         procArgs <- $"\"%s{procArgs}\" \"%s{String.Join(separator, commandArgs)}\""
 
-let scriptRunner: string = @"__CREDENTIAL_REQUEST_SCRIPT_RUNNER__"
+    let scriptRunner: string = @"__CREDENTIAL_REQUEST_SCRIPT_RUNNER__"
 
-let processStartInfo: ProcessStartInfo = new ProcessStartInfo()
-processStartInfo.FileName <- scriptRunner
-processStartInfo.Arguments <- progArgs
-processStartInfo.CreateNoWindow <- true
-processStartInfo.UseShellExecute <- false
-processStartInfo.RedirectStandardOutput <- true
-processStartInfo.RedirectStandardError <- true
+    let processStartInfo: ProcessStartInfo = new ProcessStartInfo()
+    processStartInfo.FileName <- scriptRunner
+    processStartInfo.Arguments <- procArgs
+    processStartInfo.CreateNoWindow <- true
+    processStartInfo.UseShellExecute <- false
+    processStartInfo.RedirectStandardOutput <- true
+    processStartInfo.RedirectStandardError <- true
 
-let proc: Process = new Process()
-proc.StartInfo <- processStartInfo
-proc.Start() |> ignore
+    let proc: Process = new Process()
+    proc.StartInfo <- processStartInfo
+    proc.Start() |> ignore
 
-let reqResults: string = proc.StandardOutput.ReadToEnd()
-let reqErrors: string = proc.StandardError.ReadToEnd()
-proc.WaitForExit()
+    let reqResults: string = proc.StandardOutput.ReadToEnd()
+    let reqErrors: string = proc.StandardError.ReadToEnd()
+    proc.WaitForExit()
 
-let mutable accountName: string = ""
-let securePass: SecureString = new SecureString()
+    let mutable accountName: string = ""
+    let mutable pass: string = ""
 
-if (String.IsNullOrEmpty reqErrors && not <| String.IsNullOrEmpty reqResults) then
-    printfn $"[[LOG]][INFO] Successfully retreived credentials with command '%s{scriptRunner} %s{procArgs}'"
-    let results: string array - reqResults.Split(":")
-    accountName <- results[0]
-    for c: char in Encoding.UTF8.GetString(Convert.FromBase64String(results[1])).ToCharArray() do
-        if c <> '\r' && c <> '\n' then
-            securePass.AppendChar(c)
-else  // TODO: Adjust this to include a condition for if reqErrors is not empty
-    if (String.IsNullOrEmpty reqResults) then
-        printfn $:[[LOG]][ERROR] Password request error: No credentials returned for command '%s{scriptRunner} %s{procArgs}'"
-    else
-        printfn $"[[LOG]][ERROR] Password request error: %s{reqErrors}"
-    quit()
-    exit 1
+    if (String.IsNullOrEmpty reqErrors && not <| String.IsNullOrEmpty reqResults) then
+        printfn $"[[LOG]][INFO] Successfully retreived credentials with command '%s{scriptRunner} %s{procArgs}'"
+        let results: string array = reqResults.Split(":")
+        accountName <- results[0]
+        pass <- Encoding.UTF8.GetString(Convert.FromBase64String(results[1]))
+    else  // TODO: Adjust this to include a condition for if reqErrors is not empty
+        if (String.IsNullOrEmpty reqResults) then
+            printfn $"[[LOG]][ERROR] Password request error: No credentials returned for command '%s{scriptRunner} %s{procArgs}'"
+        else
+            printfn $"[[LOG]][ERROR] Password request error: %s{reqErrors}"
+        quit()
+        exit 1
 
-new Net.NetworkCredential(accountName, securePass)
+    new Net.NetworkCredential(accountName, pass)
 
 
 //----------------------------------------------------------------------
 // Canopy configuration
 
-let screenShotDir: string = DirectInfo(@"__SCREENSHOT_DIR__").FullName
+let screenShotDir: string = DirectoryInfo(@"__SCREENSHOT_DIR__").FullName
 canopy.configuration.chromeDir <- @"__CHROME_DRIVER_DIR__"  // TODO: Adjust template for possiblity of multiple browsers
 canopy.configuration.autoPinBrowserRightOnLaunch <- false
 
@@ -120,10 +118,10 @@ canopy.configuration.autoPinBrowserRightOnLaunch <- false
 //----------------------------------------------------------------------
 // Browser options and setup
 
-let browserOptions: OpenQA.Selenium.Chrome.ChomeOptions = OpenQA.Selenium.Chrome.ChromeOptions() // TODO: Adjust template for possibility of multiple browsers
+let browserOptions: OpenQA.Selenium.Chrome.ChromeOptions = OpenQA.Selenium.Chrome.ChromeOptions() // TODO: Adjust template for possibility of multiple browsers
 __BROWSER_OPTIONS__
 
-let browseWO: canopy.types.BrowserStartMode - canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions) // TODO: Adjust template for possibility of multiple browsers
+let browserWO: canopy.types.BrowserStartMode = canopy.types.BrowserStartMode.ChromeWithOptions(browserOptions) // TODO: Adjust template for possibility of multiple browsers
 start browserWO
 
 
@@ -153,7 +151,7 @@ before (fun _ ->
 
 onPass (fun _ ->
     transactionTimer.Stop()
-    let testDurationThreshold: int64 =  testDurationThreshold[testCounter]
+    let testDurationThreshold: int64 =  testDurationThresholds[testCounter]
 
     printfn $"[[LOG]][INFO] %s{testNames[testCounter]} completed.  Run duration: %d{transactionTimer.ElapsedMilliseconds}ms"
 
@@ -178,7 +176,7 @@ onFail (fun _ ->
     result <- "failed"
     resultReason <- "unexpected result or page timed out"
 
-    printfn $"[[LOG]][ERROR] %s{testNames[testCounter]} %s{result}: %{resultReason}."
+    printfn $"[[LOG]][ERROR] %s{testNames[testCounter]} %s{result}: %s{resultReason}."
 
     if not <| String.IsNullOrEmpty(failureMessageSelector) then
         try
@@ -187,7 +185,7 @@ onFail (fun _ ->
 )
 
 after (fun _ ->
-    totalDuration <- totalDuration _ transactionTimer.ElapsedMilliseconds
+    totalDuration <- totalDuration + transactionTimer.ElapsedMilliseconds
     printfn $"totalDuration now is: %d{totalDuration}"
 )
 
@@ -196,16 +194,17 @@ after (fun _ ->
 // End actions and results printing
 
 lastly (fun _ ->
-    if totalDurationThreshold <> 0 totalDuration > totalDurationThreshold then
+    if totalDurationThreshold <> 0 && totalDuration > totalDurationThreshold then
         printfn $"[[LOG]][ERROR] %s{application} - %s{useCaseDescription}: Total run duration threshold breached.  Expected: < %d{totalDurationThreshold}ms, Actual: %d{totalDuration}ms."
         result <- "failed"
         resultReason <- $"total run duration threshold of %d{totalDurationThreshold}ms breached"
 
     printfn "[[LOG]][INFO] Test suite completed.  Publishing results."
     let appMsgs (msgs: string list): string =
-        String.Join(';', msgs)
-    else
-        ""
+        if msgs.Length > 0 then 
+            String.Join(';', msgs)
+        else
+            ""
     
     let resultsOutList: string list = [
         result
@@ -221,7 +220,7 @@ lastly (fun _ ->
         (appMsgs appendedMessages)
     ]
 
-    printfn "[[RESULT]]%s" (String.Join(',', resultsoutList))
+    printfn "[[RESULT]]%s" (String.Join(',', resultsOutList))
 )
 
 
