@@ -56,8 +56,7 @@ module Logger =
                 }
             )
 
-
-    /// this enum represents the level of log verbosity
+     /// this enum represents the level of log verbosity
     /// DEBUG - developer level debugging information
     /// INFO - this is an informational log and occurs whenever an event of significance happens
     /// WARN - these are warnings that something has not happened as stated, but was recoverable
@@ -69,7 +68,17 @@ module Logger =
         | WARN = 2
         | ERROR = 3
         | CRITICAL = 4
+        | INVALID = -1 
 
+    
+    let LogLevelFromString (level: string) : LogLevel = 
+        match level.ToLower() with 
+        | "debug" -> LogLevel.DEBUG 
+        | "info" -> LogLevel.INFO
+        | "warn" -> LogLevel.WARN
+        | "error" -> LogLevel.ERROR
+        | "critical" -> LogLevel.CRITICAL
+        | _ -> LogLevel.INVALID
 
     /// this type describes the log structure and has methods to 
     /// convert the union to and from strings 
@@ -132,6 +141,16 @@ module Logger =
                 logger = CreateCallerMethodString caller
                 message = Regex.Replace(msg, """[\t|\n|\s]+""", " ") //formats the string to replace tabs/newlines/spaces with single space
             }
+        
+        static member Decoder: Decoder<LogEntry> = 
+            Decode.object (fun get ->
+                { 
+                    timestamp = get.Required.Field "timestamp" Decode.string
+                    level = get.Required.Field "level" Decode.string |> LogLevelFromString
+                    logger = get.Required.Field "logger" Decode.string
+                    message = get.Required.Field "message" Decode.string
+                }
+            )
 
         /// formats the LogEntry to a json string using thoth library
         member this.ToJsonString = 
