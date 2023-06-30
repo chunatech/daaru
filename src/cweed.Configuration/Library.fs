@@ -59,17 +59,25 @@ module AppConfiguration =
     type AppConfiguration = { 
         /// list of directories that hold scripts to be run 
         scriptDirs: string list
+
         /// base directory of screenshots
         screenshotDirPath: string
+
+        /// directory where results from transactions are published 
+        resultsDirPath: string
+
         /// max threads that cweed transaction runner will use 
         /// to run transactions in parallel 
         maxThreadCount: int
+
         /// how frequently cweed will poll for transactions to 
         /// run 
         pollingInterval: int
+
         /// configuration options for the logger. see logging module for 
         /// details  
         logs: LoggingConfiguration
+
         /// list of browsers to use with their respective browser options and 
         /// driver locations 
         browsers: BrowserConfiguration list 
@@ -87,6 +95,7 @@ module AppConfiguration =
         static member Default = { 
             scriptDirs = [ (Path.Join(System.AppContext.BaseDirectory, "scripts")) ]
             screenshotDirPath =  (Path.Join(System.AppContext.BaseDirectory, "screenshots")) 
+            resultsDirPath = (Path.Join(System.AppContext.BaseDirectory, "results"))
             maxThreadCount = 4
             pollingInterval = 5
             logs = LoggingConfiguration.Default
@@ -104,6 +113,9 @@ module AppConfiguration =
                     screenshotDirPath = 
                         get.Optional.Field "screenshotDirectory" (Decode.string)
                         |> Option.defaultValue AppConfiguration.Default.screenshotDirPath
+                    resultsDirPath = 
+                        get.Optional.Field "resultsDirectory" (Decode.string)
+                        |> Option.defaultValue AppConfiguration.Default.resultsDirPath
                     maxThreadCount = 
                         get.Optional.Field "maxThreadCount" Decode.int |> Option.defaultValue 4
                     pollingInterval = 
