@@ -208,9 +208,10 @@ module Logger =
             File.WriteAllText(filepath,content)
 
         let private _writeUnstructuredLog (entry: LogEntry) = 
-            File.AppendAllLinesAsync((Path.Join(_logFileLocation, _logFileName)), [$"%s{entry.ToLogString}"])
-                |> Async.AwaitTask
-                |> ignore
+            File.AppendAllLines((Path.Join(_logFileLocation, _logFileName)), [$"%s{entry.ToLogString}"])
+            // File.AppendAllLinesAsync((Path.Join(_logFileLocation, _logFileName)), [$"%s{entry.ToLogString}"])
+                // |> Async.AwaitTask
+                // |> ignore
 
         let private _processLogEntryQueue  () = 
             while (_queue.TryPeek() |> fst) do 
@@ -257,7 +258,7 @@ module Logger =
         let writeLog (callerMethod: MethodBase) (level: LogLevel) (msg: string) = 
             if (int level) >= (int _config.verbosity) then 
                 queueLog callerMethod level  msg 
-            _processLogEntryQueue ()
+            _processLogEntryQueue()
 
         let writeLogAndPrintToConsole (callerMethod: MethodBase)  (level: LogLevel) (msg: string) = 
             if (int level) >= (int _config.verbosity) then
