@@ -202,15 +202,47 @@ module Logger =
                 )
                 File.Move(lfilepath, newLogFilePath)
 
+        let private _writeJsonLog (entryList: LogEntry list) = 
+            let filepath = Path.Join(_logFileLocation, "cweed.log.json")
+            let content = ( entryList |> Encode.Auto.toString )
+            File.WriteAllText(filepath,content)
+
+        let private _writeUnstructuredLog (entry: LogEntry) = 
+            File.AppendAllLinesAsync((Path.Join(_logFileLocation, _logFileName)), [$"%s{entry.ToLogString}"])
+                |> Async.AwaitTask
+                |> ignore
+
         let private _processLogEntryQueue  () = 
             while (_queue.TryPeek() |> fst) do 
                 match _queue.TryDequeue() with 
                 | (true, (entry: LogEntry)) -> 
 
-                    File.AppendAllLinesAsync((Path.Join(_logFileLocation, _logFileName)), [$"%s{entry.ToLogString}"])
-                    |> Async.AwaitTask
-                    // TODO: if there's an exception its being ignored. handle this better
-                    |> ignore
+                    match _config.format with 
+                    | "json" ->
+                        let jsonFilepath = Path.Join(_logFileLocation, "cweed.log.json")
+                        
+                        if (not <| File.Exists(jsonFilepath)) then 
+                            [entry] |> _writeJsonLog
+                        else
+                            let logs: Result<LogEntry list, string> = 
+
+                                File.ReadAllText(Path.Join(_logFileLocation, "cweed.log.json"))
+                                |> Decode.Auto.fromString
+
+                            match logs with 
+                            | Ok loglist -> 
+                                let loglist' = entry::loglist
+                                loglist' |> _writeJsonLog
+                            | Error e -> 
+                                let last = e.Split(' ') |> Enumerable.Last
+                                match last with 
+                                | "null" -> 
+                                     [entry] |> _writeJsonLog
+                                | _ -> 
+                                    printfn "%s" e
+
+                    | _ -> 
+                       entry |> _writeUnstructuredLog
 
                     _rollLogFile ()
                 | _ -> ()
