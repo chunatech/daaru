@@ -117,15 +117,10 @@ module CwTransactions =
         let templatesDir: string = Path.Join(AppContext.BaseDirectory, "templates")
 
         // these are required dlls for use in the transaction file
+        let libDirDLLs: FileInfo array = DirectoryInfo("libs").GetFiles("*.dll", SearchOption.AllDirectories)
         let private _defaultImports = 
-            [|
-                "libs/canopy.dll";
-                "libs/Newtonsoft.Json.dll";
-                "libs/WebDriver.dll";
-            |] 
-            |> Array.map (fun p -> $"#r @\"%s{(Path.Join(System.AppContext.BaseDirectory,p))}\"")
-            
-
+            libDirDLLs
+            |> Array.map (fun p -> $"#r @\"%s{p.FullName}\"")
 
         // array containing the default open statements in the "header" section
         let private _defaultOpenStmts: string array = [|
