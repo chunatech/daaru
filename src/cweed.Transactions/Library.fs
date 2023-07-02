@@ -17,6 +17,8 @@ module CwTransactions =
     type TransactionConfiguration = { 
         scriptPath: string
         stagedScriptPath: string
+        logPath: string
+        resultsPath: string
         pollingInterval: int
         browser: string
         browserOptions: string array
@@ -246,7 +248,6 @@ module CwTransactions =
             
             // create the path for the staging file
             let stagingFilePath = sourcePath.Replace(sourceDir, stagingDir).Replace(".cwt", ".fsx")
-            let targetStagingDir = Path.GetDirectoryName(stagingFilePath)
             // first read in template. currenltly only supporting default template. if this can't be read in then exit the program we 
             // wont be able to construct any scripts.
             let templateContents = 
@@ -257,19 +258,33 @@ module CwTransactions =
             let templateContents' = templateContents
             templateContents' |> Array.Reverse
 
-
             let result = 
                 _buildFromTemplate tConfig (templateContents' |> Array.toList) []
 
-            // create staging directory mirror of target script
-            Directory.CreateDirectory targetStagingDir 
-            |> ignore
+            let logPath: string = 
+                stagingFilePath.Replace(@"/staging/",@"/logs/")
+                               .Replace(@"\\staging\\", @"\logs\")
+                               .Replace(@".fsx",@".log")
+
+            let resultsPath: string = 
+                stagingFilePath.Replace(@"/staging/",@"/results/")
+                               .Replace(@"\staging\", @"\results\")
+                               .Replace(@".fsx",@"_results.csv")
+
+            for fp in [ stagingFilePath; logPath; resultsPath ] do
+                // create staging directory mirror of target script
+                Directory.CreateDirectory (Path.GetDirectoryName(fp)) 
+                |> ignore
 
             // create the fsx
             File.WriteAllLines(stagingFilePath, result)
 
             // TODO add some config with staged filepath
-            ({ tConfig with stagedScriptPath = stagingFilePath })
+            { tConfig with 
+                stagedScriptPath = stagingFilePath
+                logPath = logPath
+                resultsPath = resultsPath
+            }
             |> Some
 
 
@@ -282,17 +297,34 @@ module CwTransactions =
             // create the path for the staging file
             let stagingFilePath: string = sourcePath.Replace(sourceDir, stagingDir)
             printfn $"stagingFilePath: %s{stagingFilePath}"
-            let targetStagingDir: string = Path.GetDirectoryName(stagingFilePath)
 
-            // create staging directory mirror of target script
-            Directory.CreateDirectory targetStagingDir 
-            |> ignore
+            // create path for transaction log file
+            let logPath: string =
+                stagingFilePath.Replace(@"/staging/",@"/logs/")
+                               .Replace(@"\\staging\\", @"\logs\")
+                               .Replace(@".fsx",@".log")
+            
+            // create path for transaction _results.csv file
+            let resultsPath: string =
+                stagingFilePath.Replace(@"/staging/",@"/results/")
+                                .Replace(@"\\staging\\", @"\results\")
+                                .Replace(@".fsx",@"_results.csv")
 
-            // create the fsx
+            for fp in [ stagingFilePath; logPath; resultsPath ] do
+                // create staging directory mirror
+                Directory.CreateDirectory (Path.GetDirectoryName(fp))
+                |> ignore
+            
+            // copy the fsx
             File.Copy(sourcePath, stagingFilePath, true)
 
             // return the config
-            { tConfig with stagedScriptPath = stagingFilePath }
+            { tConfig with
+                stagedScriptPath = stagingFilePath
+                logPath = logPath
+                resultsPath = resultsPath
+
+            }
             |> Some
 
 
@@ -310,6 +342,8 @@ module CwTransactions =
             let tConfig: TransactionConfiguration = {
                 scriptPath = path
                 stagedScriptPath = ""
+                logPath = ""
+                resultsPath = ""
                 pollingInterval = _config.pollingInterval
                 browser = browserConfigs[0].browser
                 browserOptions = browserConfigs[0].browserOpts 
@@ -449,7 +483,6 @@ module CwTransactions =
 
 
             member private this.handleTransactionOutput (t: Transaction) (e: DataReceivedEventArgs) =
-                // TODO: Build out logic here to handle successful results parsing
                 if String.IsNullOrEmpty(e.Data) |> not then
                     let latest: option<Transaction> = TransactionRegister.get t.Configuration.scriptPath
                     match latest with
@@ -476,6 +509,16 @@ module CwTransactions =
                             if Int32.TryParse(numString, &num) then
                                 lt.LastRunDetails.Failed <- num
                                 TransactionRegister.update lt
+                        // RESULTS
+                        | (text: string) when text.StartsWith("[[RESULT]]") ->
+                            printfn "%s" (e.Data.Replace("[[RESULT]]", ""))
+                            printfn "%s" lt.Configuration.resultsPath
+                            //TODO: actually write out the results to the resultsPath of the transaction
+                        // LOG
+                        | (text: string) when text.StartsWith("[[LOG]]") ->
+                            printfn "%s" (e.Data.Replace("[[LOG]]", ""))
+                            printfn "%s" lt.Configuration.logPath
+                            //TODO: actually write out the log lines to the logPath of the transaction
                         // Change this to a log:
                         | _ ->
                             lt.LastRunDetails.UnhandledOutput <- lt.LastRunDetails.UnhandledOutput + 1
