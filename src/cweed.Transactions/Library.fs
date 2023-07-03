@@ -78,7 +78,7 @@ module CwTransactions =
 
 
     and RunDetails = {
-        mutable BrowserStarting: DateTime
+        mutable BrowserDriverVersion: string
         mutable BrowserDriverPort: string
         mutable BrowserStarted: DateTime
         mutable Passed: int
@@ -91,7 +91,7 @@ module CwTransactions =
     with
         static member Create () =
             {
-                RunDetails.BrowserStarting = DateTime()
+                RunDetails.BrowserDriverVersion = ""
                 BrowserDriverPort = ""
                 BrowserStarted = DateTime()
                 Passed = 0
@@ -434,6 +434,7 @@ module CwTransactions =
         open System.Timers
         open System.Diagnostics
         open System.Collections.Concurrent
+        open System.Text.RegularExpressions
 
         type TransactionRunner = {
             fsiPath: string
@@ -477,7 +478,22 @@ module CwTransactions =
                 let latest: option<Transaction> = TransactionRegister.get t.Configuration.scriptPath
                 match latest with
                 | Some (lt: Transaction) ->
-                    printfn "%A" lt.LastRunDetails
+                    if lt.LastRunDetails.Failed > 0 then
+                        lt.LastFailure <- DateTime.Now
+
+                        if lt.ConsecutiveRunCount > 0 then
+                            lt.ConsecutiveRunCount <- -1
+                        else
+                            lt.ConsecutiveRunCount <- lt.ConsecutiveRunCount - 1
+                    elif lt.LastRunDetails.Passed > 0 then
+                        lt.LastSuccess <- DateTime.Now
+
+                        if lt.ConsecutiveRunCount > 0 then
+                            lt.ConsecutiveRunCount <- lt.ConsecutiveRunCount + 1
+                        else
+                            lt.ConsecutiveRunCount <- 1
+                    TransactionRegister.update lt
+                    printfn "%A" lt
                 | None ->
                     ()
 
@@ -488,6 +504,22 @@ module CwTransactions =
                     match latest with
                     | Some (lt: Transaction) ->
                         match e.Data with
+                        // STARTING (Extract driver port and version):
+                        | (text: string) when text.StartsWith("Starting ") ->
+                            let port: string = text.Split(" on port ")[1]
+                            lt.LastRunDetails.BrowserDriverPort <- port
+
+                            let pattern: Regex = Regex(@"\b\d+\.[0-9\.]+\b")
+                            let found: Match = pattern.Match(text)
+
+                            if found.Success then
+                                lt.LastRunDetails.BrowserDriverVersion <- found.Value
+
+                            TransactionRegister.update lt
+                        // STARTED:
+                        | (text: string) when text.EndsWith("started successfully.") ->
+                            lt.LastRunDetails.BrowserStarted <- DateTime.Now
+                            TransactionRegister.update lt
                         // PASSED:
                         | (text: string) when text.EndsWith(" passed") ->
                             let numString: string = text.Split(" ") |> Array.head
@@ -507,18 +539,19 @@ module CwTransactions =
                             let numString: string = text.Split(" ") |> Array.head
                             let mutable num: int = 0
                             if Int32.TryParse(numString, &num) then
-                                lt.LastRunDetails.Failed <- num
+                                lt.LastRunDetails.Skipped <- num
                                 TransactionRegister.update lt
-                        // RESULTS
-                        | (text: string) when text.StartsWith("[[RESULT]]") ->
-                            printfn "%s" (e.Data.Replace("[[RESULT]]", ""))
-                            printfn "%s" lt.Configuration.resultsPath
-                            //TODO: actually write out the results to the resultsPath of the transaction
-                        // LOG
+                        // RESULTS:
+                        | (text: string) when text.StartsWith("[[RESULT_HEADER]]") ->
+                            let header: string = (e.Data.Split("[[RESULT]]")[0]).Replace("[[RESULT_HEADER]]","")
+                            let results: string = e.Data.Split("[[RESULT]]")[1]
+                            Utils.CsvTools.appendStringToCSVFile lt.Configuration.resultsPath header results
+                        // LOG:
                         | (text: string) when text.StartsWith("[[LOG]]") ->
                             printfn "%s" (e.Data.Replace("[[LOG]]", ""))
                             printfn "%s" lt.Configuration.logPath
                             //TODO: actually write out the log lines to the logPath of the transaction
+                            //      (pending Tina's adjustment of the logger)
                         // Change this to a log:
                         | _ ->
                             lt.LastRunDetails.UnhandledOutput <- lt.LastRunDetails.UnhandledOutput + 1
@@ -545,7 +578,6 @@ module CwTransactions =
                             let ver: string = text.Substring(text.LastIndexOf("version ")).Replace("version ", "").Replace(".", "")
                             // Change this to a log:
                             LogWriter.writeLog  (MethodBase.GetCurrentMethod()) LogLevel.WARN $"ChromeDriver update necessary.  Expecting version %s{ver}."
-                            //printfn $"ChromeDriver update necessary.  Expecting version %s{ver}."
                             lt.LastRunDetails.DriverVersionMismatch <- (true, ver)
                             TransactionRegister.update lt
                         // | (text: string) when text.EndsWith("subscribing a listener to the already connected DevToolsClient. Connection notification will not arrive.") ->

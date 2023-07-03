@@ -206,7 +206,23 @@ lastly (fun _ ->
         else
             ""
     
+    let resultsHeaderList: string list = [
+        "timestamp"
+        "result"
+        "resultReason"
+        "targetUrl"
+        "application"
+        "useCaseDescription"
+        "totalDuration"
+        "totalDurationThreshold"
+        "lastTestRun"
+        "lastTestDuration"
+        "lastTestDurationThreshold"
+        "appendedMessages"
+    ]
+    
     let resultsOutList: string list = [
+        (DateTime.Now.ToString("yyyyMMdd_HHmmss"))
         result
         resultReason
         targetUrl
@@ -220,7 +236,7 @@ lastly (fun _ ->
         (appMsgs appendedMessages)
     ]
 
-    printfn "[[RESULT]]%s" (String.Join(',', resultsOutList))
+    printfn "[[RESULT_HEADER]]%s[[RESULT]]%s" (String.Join(',', resultsHeaderList)) (String.Join(',', resultsOutList))
 )
 
 

@@ -4,6 +4,7 @@ module Utils =
     open Thoth.Json.Net
     open System.IO
 
+
     module DateTimeHandlers = 
         open System
 
@@ -101,7 +102,7 @@ module Utils =
         /// then create the file and add the header details before appending the 
         /// record. Returns a result that gives a string error that represents a 
         /// short message of the exn thrown to be handled by the caller
-        let appendCSVFile<'T> (csv: string) (record: 'T) : Result<unit, string> = 
+        let appendRecordToCSVFile<'T> (csv: string) (record: 'T) : Result<unit, string> = 
             let fullPath: string = System.IO.DirectoryInfo(csv).FullName 
             let header: string = createCSVHeaderStr<'T> ()
             let r: string = createCSVRecordStr<'T> (record) 
@@ -118,6 +119,22 @@ module Utils =
                 with (exn: exn) -> 
                     Error exn.Message
 
+        let appendStringToCSVFile (filepath: string) (header: string) (line: string) =
+            let fullPath: string = FileInfo(filepath).FullName
+
+            if (not <| File.Exists(fullPath)) then
+                try
+                    File.AppendAllLines(fullPath, [header])
+                with (exn: exn) ->
+                    printfn "%A" exn.Message
+                    //TODO: Write error to log
+            
+            try
+                File.AppendAllLines(fullPath, [line])
+            with (exn: exn) ->
+                printfn "%A" exn.Message
+                //TODO: Write error to log
+
 
     module FilePathDecoder =
         let Decoder: Decoder<string> = 
@@ -132,6 +149,7 @@ module Utils =
                     Error <| (path, BadType("file not found", value))
                 // this is should be a located, valid path
                 else v.ToString() |> Ok
+
 
     module DirPathDecoder = 
         let Decoder: Decoder<string> = 
