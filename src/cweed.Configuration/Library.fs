@@ -176,13 +176,28 @@ module AppConfiguration =
         let private _decodeConfigContentsJsonOrDefault (contents: string) = 
             match contents |> Decode.fromString AppConfiguration.Decoder with 
                 | Ok config -> 
-                    match config.credentialsRequestScript with 
+                    let mutable cfg: AppConfiguration = config
+                    
+                    // handle severity threshold out of bounds 
+                    if config.logs.Severity > 4 then 
+                        let logCfg: LoggingConfiguration = { config.logs with Severity = 4 }
+                        let appCfg: AppConfiguration = { config with logs = logCfg }
+                        cfg <- appCfg
+                    else if config.logs.Severity < 0 then 
+                        let logCfg: LoggingConfiguration = { config.logs with Severity = 0 }
+                        let appCfg: AppConfiguration = { config with logs = logCfg }
+                        cfg <- appCfg
+                    
+                    // check credentials request script if exists
+                    match cfg.credentialsRequestScript with 
                     // validate credential runner path 
                     | Some creds -> 
                         if (not <| File.Exists(creds.credScriptPath)) || (not <| File.Exists(creds.credRunnerPath)) then 
                             exit 1
-                        else config
-                    | None -> config 
+                        else cfg
+                    | None -> cfg 
+
+                // configuration was not decoded on this branch. return the default configuration
                 | Error errstr -> 
                     AppConfiguration.Default
 

@@ -5,19 +5,27 @@ open cwLogger.Logger
 
 open System
 open System.IO
+open System.Reflection
 
 let fsiSaLocation: string = (Path.Join(AppContext.BaseDirectory, "fsi_standalone/fsi_standalone"))
 let stagingDir: string = TransactionBuilder.stagingDir
 
-let initAppConfigs () = 
-    let appConfig: AppConfiguration = ConfigFileHandler.readConfigFileOrDefault ()
-    TransactionBuilder.init (appConfig)
-    appConfig
+let InitializeProgram () = 
+    let mutable appConfig: AppConfiguration = ConfigFileHandler.readConfigFileOrDefault ()
+    let logger: Logger = new Logger(appConfig.logs.FileSizeLimit, enum<Severity>(appConfig.logs.Severity))
+    TransactionBuilder.init (appConfig) 
+    appConfig, logger
 
 [<EntryPoint>]
 let main args = 
     // initialize configurations
-    let mutable appConfig: AppConfiguration = initAppConfigs()
+    let (appConfig: AppConfiguration), (logger: Logger) = InitializeProgram()
+    let logDirectory: string = appConfig.logs.LogDirectory
+    let cweedLogFile: string = Path.Join(logDirectory, "cweed.log")
+
+    if not <| Directory.Exists(logDirectory) then Directory.CreateDirectory(logDirectory) |> ignore
+    
+    logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"program initialzied with settings: {appConfig}"
 
     // register existing scripts 
     let existingScripts: string array = TransactionWatcher.registerExistingScripts (appConfig.scriptDirs |> List.toArray)
@@ -31,6 +39,7 @@ let main args =
     while true do 
         Threading.Thread.Sleep(100)
         runner.runTransactions ()
+        logger.ProcessQueue()
     exit 0
 
 (*
