@@ -11,10 +11,7 @@ let stagingDir: string = TransactionBuilder.stagingDir
 
 let initAppConfigs () = 
     let appConfig: AppConfiguration = ConfigFileHandler.readConfigFileOrDefault ()
-    
-    // initialize the transaction builder
-    TransactionBuilder.init (appConfig)    
-    
+    TransactionBuilder.init (appConfig)
     appConfig
 
 [<EntryPoint>]
@@ -34,7 +31,6 @@ let main args =
     while true do 
         Threading.Thread.Sleep(100)
         runner.runTransactions ()
-
     exit 0
 
 (*

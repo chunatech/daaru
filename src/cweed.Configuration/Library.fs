@@ -10,34 +10,29 @@ module AppConfiguration =
     /// this is the logging configuration settings and 
     /// are nested within the AppConfiguration record 
     type LoggingConfiguration = { 
-        location: string
-        rollSize: int
-        format: string
-        verbosity: int 
+        LogDirectory: string
+        FileSizeLimit: int
+        Severity: int 
     } with
 
         static member Default = { 
-            location = (Path.Join(AppContext.BaseDirectory, "logs"))
-            rollSize = 10
-            format = "unstructured"
-            verbosity = 1 
+            LogDirectory = (Path.Join(AppContext.BaseDirectory, "logs"))
+            FileSizeLimit = 10
+            Severity = 1 
         }
 
         static member Decoder: Decoder<LoggingConfiguration> =
             Decode.object (fun (get: Decode.IGetters) ->
                 { 
-                    location =
-                        get.Optional.Field "location" Decode.string
-                        |> Option.defaultValue LoggingConfiguration.Default.location
-                    rollSize =
-                        get.Optional.Field "rollSize" Decode.int
-                        |> Option.defaultValue LoggingConfiguration.Default.rollSize
-                    format =
-                        get.Optional.Field "format" Decode.string
-                        |> Option.defaultValue LoggingConfiguration.Default.format
-                    verbosity =
-                        get.Optional.Field "verbosity" Decode.int
-                        |> Option.defaultValue LoggingConfiguration.Default.verbosity 
+                    LogDirectory =
+                        get.Optional.Field "LogDirectory" Decode.string
+                        |> Option.defaultValue LoggingConfiguration.Default.LogDirectory
+                    FileSizeLimit =
+                        get.Optional.Field "FileSizeLimit" Decode.int
+                        |> Option.defaultValue LoggingConfiguration.Default.FileSizeLimit
+                    Severity =
+                        get.Optional.Field "Severity" Decode.int
+                        |> Option.defaultValue LoggingConfiguration.Default.Severity 
                 }
             )
 
