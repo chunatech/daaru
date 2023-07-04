@@ -2,9 +2,46 @@
 
 
 module AppConfiguration =
+    open System
     open System.IO
     open Thoth.Json.Net
-    open cweed.Logger
+
+
+    /// this is the logging configuration settings and 
+    /// are nested within the AppConfiguration record 
+    type LoggingConfiguration = { 
+        location: string
+        rollSize: int
+        format: string
+        verbosity: int 
+    } with
+
+        static member Default = { 
+            location = (Path.Join(AppContext.BaseDirectory, "logs"))
+            rollSize = 10
+            format = "unstructured"
+            verbosity = 1 
+        }
+
+        static member Decoder: Decoder<LoggingConfiguration> =
+            Decode.object (fun (get: Decode.IGetters) ->
+                { 
+                    location =
+                        get.Optional.Field "location" Decode.string
+                        |> Option.defaultValue LoggingConfiguration.Default.location
+                    rollSize =
+                        get.Optional.Field "rollSize" Decode.int
+                        |> Option.defaultValue LoggingConfiguration.Default.rollSize
+                    format =
+                        get.Optional.Field "format" Decode.string
+                        |> Option.defaultValue LoggingConfiguration.Default.format
+                    verbosity =
+                        get.Optional.Field "verbosity" Decode.int
+                        |> Option.defaultValue LoggingConfiguration.Default.verbosity 
+                }
+            )
+
+
 
     /// this configuration type describes the
     /// configuration for a browser that is going
@@ -141,43 +178,26 @@ module AppConfiguration =
         /// default directory to look for config file 
         let configFileLocation = (Path.Join(System.AppContext.BaseDirectory, "config"))
 
-        /// decode json into an AppConfiguration or in the case of an error
-        /// provide the defaut configuration
         let private _decodeConfigContentsJsonOrDefault (contents: string) = 
             match contents |> Decode.fromString AppConfiguration.Decoder with 
                 | Ok config -> 
-                    let infoLog = LogWriter.writeLog (System.Reflection.MethodBase.GetCurrentMethod()) LogLevel.INFO
-                    infoLog $"configuration decoded from successfully: {config}"
                     match config.credentialsRequestScript with 
                     // validate credential runner path 
                     | Some creds -> 
                         if (not <| File.Exists(creds.credScriptPath)) || (not <| File.Exists(creds.credRunnerPath)) then 
-                            LogWriter.writeLogAndPrintToConsole (System.Reflection.MethodBase.GetCurrentMethod()) (LogLevel.ERROR) $"invalid credential runner path or credential script path %A{creds}"
                             exit 1
                         else config
                     | None -> config 
                 | Error errstr -> 
-                    let warnLog = LogWriter.writeLog (System.Reflection.MethodBase.GetCurrentMethod()) LogLevel.WARN 
-                    warnLog errstr
-                    warnLog "using default configuration"
-                    // log warn here and provide the error string 
                     AppConfiguration.Default
 
 
         let readConfigFileOrDefault () = 
-            let log = LogWriter.writeLog (System.Reflection.MethodBase.GetCurrentMethod())
-
             let cFile = Path.Join(configFileLocation, configFileName)
-            log LogLevel.DEBUG $"the value of cFile is %s{cFile}"
-
             if (File.Exists(cFile) |> not) then 
-                log LogLevel.WARN $"%s{cFile} does not exist. using default configuration"
                 AppConfiguration.Default
             else
                 try File.ReadAllText(cFile)
                 with 
-                    | exn -> 
-                        log LogLevel.WARN $"error reading %s{cFile}. default configuration will be applied"
-                        log LogLevel.DEBUG $"exception raised while reading %s{cFile}. %s{exn.Message}"
-                        "" 
+                    | exn -> "" 
                 |> _decodeConfigContentsJsonOrDefault

@@ -6,7 +6,6 @@ module CwTransactions =
     open System.Reflection
 
     open AppConfiguration
-    open Logger
 
     /// this is the configuration record for a specific transaction
     /// intended for use by the transaction runner. this configuration
@@ -253,7 +252,6 @@ module CwTransactions =
             let templateContents = 
                 try File.ReadAllLines(Path.Join(templatesDir, "default.template")) 
                 with exn -> 
-                    LogWriter.writeLogAndPrintToConsole (MethodBase.GetCurrentMethod()) LogLevel.ERROR $"%s{exn.Message}"
                     exit 0
             let templateContents' = templateContents
             templateContents' |> Array.Reverse
@@ -356,12 +354,7 @@ module CwTransactions =
             match Path.GetExtension(tConfig.scriptPath) with 
             | ".fsx" -> _processFsx tConfig 
             | ".cwt" -> _processCwtFromTemplate tConfig
-            | _ -> 
-                LogWriter.writeLog 
-                    (MethodBase.GetCurrentMethod())
-                    LogLevel.INFO
-                    $"{tConfig.scriptPath} has an unrecognized extension"
-                None
+            | _ -> None
 
     /// holds a list of located transactions and handles the transaction registration 
     /// process 
@@ -560,8 +553,6 @@ module CwTransactions =
                             // consider as debug setting in future when debug settings are programmed. for now keep as .unhandled file -Tina
                             lt.WriteOutUnhandled STDOUT e.Data
 
-                            LogWriter.writeLog  (MethodBase.GetCurrentMethod()) LogLevel.DEBUG $"STDOUT: Unhandled output received from %s{t.Configuration.scriptPath}: %s{e.Data}"
-                            
                     | None ->
                         ()  // TODO: Add logging here.  We should never reach this.
           
@@ -577,7 +568,6 @@ module CwTransactions =
                         | (text: string) when text.Contains("[WARNING]: This version of ChromeDriver has not been tested with Chrome version") ->
                             let ver: string = text.Substring(text.LastIndexOf("version ")).Replace("version ", "").Replace(".", "")
                             // Change this to a log:
-                            LogWriter.writeLog  (MethodBase.GetCurrentMethod()) LogLevel.WARN $"ChromeDriver update necessary.  Expecting version %s{ver}."
                             lt.LastRunDetails.DriverVersionMismatch <- (true, ver)
                             TransactionRegister.update lt
                         // | (text: string) when text.EndsWith("subscribing a listener to the already connected DevToolsClient. Connection notification will not arrive.") ->
@@ -586,8 +576,6 @@ module CwTransactions =
                             lt.LastRunDetails.UnhandledErrors <- lt.LastRunDetails.UnhandledErrors + 1
                             TransactionRegister.update lt
                             lt.WriteOutUnhandled STDERR e.Data
-                            // printfn $"Unhandled error received from %s{t.Configuration.scriptPath}:\n%s{e.Data}"
-                            LogWriter.writeLog  (MethodBase.GetCurrentMethod()) LogLevel.DEBUG $"STDERROR: Unhandled output received from %s{t.Configuration.scriptPath}: %s{e.Data}"
                     | None ->
                         ()  // TODO: Add logging here.  We should never reach this.
 
@@ -665,9 +653,6 @@ module CwTransactions =
             | None ->
                 msg <- "no transaction to remove at " + path
 
-            LogWriter.writeLogAndPrintToConsole this LogLevel.INFO msg
-
-
 
 
         let add (path: string) =
@@ -682,7 +667,6 @@ module CwTransactions =
                 msg <- $"unable to add %s{path}"
                 ()
 
-            LogWriter.writeLogAndPrintToConsole this LogLevel.INFO msg
 
         let update (path: string) =
             // TODO:  Make this method check hash of staged file against source file
@@ -705,8 +689,6 @@ module CwTransactions =
                 // else
                 //     msg <- $"%s{path} touched, but not changed.  Taking no action."
 
-                LogWriter.writeLogAndPrintToConsole this LogLevel.INFO msg
-
             | None ->
                 ()
 
@@ -715,9 +697,8 @@ module CwTransactions =
             // TODO: Build out logic to have staged .fsx files validated
             let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
             let msg: string = $"validating {path}" 
+            ()
             
-            LogWriter.writeLogAndPrintToConsole this LogLevel.INFO msg
-
 
 
         let createForDirs (watcherType: WatcherType) (dirArr: string array) =
@@ -742,8 +723,6 @@ module CwTransactions =
             let this: Reflection.MethodBase = MethodBase.GetCurrentMethod()
             let mutable scriptPaths: string array = [||]
             for dir: string in confDirs do
-                
-                LogWriter.writeLogAndPrintToConsole this LogLevel.INFO $"registering directory {dir}"
                 
                 let dirInfo: DirectoryInfo = DirectoryInfo(dir)
                 let cwtScripts: FileInfo array = dirInfo.GetFiles("*.cwt", SearchOption.AllDirectories)
