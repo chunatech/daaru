@@ -1,6 +1,7 @@
 ﻿open cweed.AppConfiguration
 open cweed.CwTransactions
 open cweed.CwTransactions.TransactionRunner
+open cwLogger.Logger
 
 open System
 open System.IO
