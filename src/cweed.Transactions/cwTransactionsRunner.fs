@@ -105,7 +105,7 @@ module cwTransactionRunner =
 
                 log Severity.Debug $"running cwTransactionRegister update handle"
                 cwTransactionRegister.update lt
-                printfn "%A" lt
+                log Severity.Info $"%A{lt}"
             | None ->
                 log Severity.Debug "no latest transaction detected this cycle"
 
@@ -233,22 +233,28 @@ module cwTransactionRunner =
         
 
         member private this.handleTransactionError (t: Transaction) (e: DataReceivedEventArgs) =
+            let log = this.logger.Log this.logFile (MethodBase.GetCurrentMethod())
+
             // TODO: Build out logic here for error/failure parsing and handling
             if String.IsNullOrEmpty(e.Data) |> not then
                 let latest: option<Transaction> = cwTransactionRegister.get t.Configuration.scriptPath
                 match latest with
                 | Some (lt: Transaction) ->
+                    log Severity.Debug $"transaction error detected for %s{lt.Configuration.scriptPath}"
                     match e.Data with
                     // Version mismatch:
                     | (text: string) when text.Contains("[WARNING]: This version of ChromeDriver has not been tested with Chrome version") ->
                         let ver: string = text.Substring(text.LastIndexOf("version ")).Replace("version ", "").Replace(".", "")
                         // Change this to a log:
                         lt.LastRunDetails.DriverVersionMismatch <- (true, ver)
+                        log Severity.Warn $"chrome driver mismatch detected: %s{ver} is mismatch"
+
                         cwTransactionRegister.update lt
                     // | (text: string) when text.EndsWith("subscribing a listener to the already connected DevToolsClient. Connection notification will not arrive.") ->
                     //     ignore text
                     | _ ->
                         lt.LastRunDetails.UnhandledErrors <- lt.LastRunDetails.UnhandledErrors + 1
+                        log Severity.Debug $"unhandled errors incremented for transaction %s{lt.Configuration.scriptPath} to %d{lt.LastRunDetails.UnhandledErrors}"
                         cwTransactionRegister.update lt
                         lt.WriteOutUnhandled STDERR e.Data
                 | None ->
@@ -256,28 +262,29 @@ module cwTransactionRunner =
 
 
         member this.runTransactions () =
+            let log = this.logger.Log this.logFile (MethodBase.GetCurrentMethod())
             if this.queue.TryPeek() |> fst |> not then
-                //printfn "No transactions to run..."
-                ()
+                log Severity.Debug "No transactions to run this cycle"
             else
                 if this.threadTracker.TryPeek() |> fst |> not then
-                    printfn "No threads available to run transaction..."
-                    ()
+                    log Severity.Info "No threads available to run transactions..."
                 else
                     // TODO: This is probably unsafe, come back and fix it, if needed.
                     let t: Transaction = this.queue.TryDequeue() |> snd
                     let threadId: int32 = this.threadTracker.TryDequeue() |> snd
 
-                    printfn $"%s{t.Configuration.scriptPath} last ran at: %s{t.LastRunTime.ToString()}"
+                    log Severity.Info $"%s{t.Configuration.scriptPath} last ran at: %s{t.LastRunTime.ToString()}"
                     t.LastRunTime <- DateTime.Now
                     cwTransactionRegister.update t
-                    printfn $"%s{t.Configuration.scriptPath} starting at: %s{t.LastRunTime.ToString()}"
+                    log Severity.Info $"%s{t.Configuration.scriptPath} starting at: %s{t.LastRunTime.ToString()}"
 
+                    log Severity.Debug $"setting up process info"
                     let psi: ProcessStartInfo = new ProcessStartInfo(this.fsiPath, $"%s{t.Configuration.stagedScriptPath}")
                     psi.UseShellExecute <- false
                     psi.RedirectStandardOutput <- true
                     psi.RedirectStandardError <- true
-                    
+
+                    log Severity.Debug $"creating process" 
                     let p: Process = new Process()
                     p.StartInfo <- psi
                     p.EnableRaisingEvents <- true

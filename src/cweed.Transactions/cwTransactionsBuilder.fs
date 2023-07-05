@@ -192,11 +192,11 @@ module TransactionBuilder =
     // set up and copy fsx files into staging. return updated transaction configuration
     let private _processFsx (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
         let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
-        printfn $"sourcePath: %s{sourcePath}"
+        // printfn $"sourcePath: %s{sourcePath}"
         let sourceDir: string = Path.GetDirectoryName(sourcePath)
         // create the path for the staging file
         let stagingFilePath: string = sourcePath.Replace(sourceDir, stagingDir)
-        printfn $"stagingFilePath: %s{stagingFilePath}"
+        // printfn $"stagingFilePath: %s{stagingFilePath}"
 
         // create path for transaction log file
         let logPath: string =
