@@ -26,7 +26,8 @@ module Logger =
     }
     with
         /// the log as a log line. formatted as `TimeStamp [Severity] Caller Msg`
-        member x.ToLogString(dateFmt: string) = $"%s{(x.TimeStamp).ToString(dateFmt)} [%A{x.Severity}] %s{x.Caller} '%s{x.Msg}'"
+        member x.ToLogString(dateFmt: string) = 
+            $"%s{(x.TimeStamp).ToString(dateFmt)} [%s{x.Severity.ToString().ToUpper()}] %s{x.Caller} '%s{x.Msg}'"
 
     type private LoggingQueue = ConcurrentQueue<Log>
 
@@ -73,7 +74,7 @@ module Logger =
             let first_ts: string = (firstLine.Split(".")[0]).TrimEnd()
             let now_ts: string = ((DateTime.Now.ToString(this.DateFmt)).Split(".")[0]).TrimEnd()
             let file_info: FileInfo = FileInfo(logFile)
-            let roll_file_name: string = (file_info.FullName).Replace($"{file_info.Name}.log", $"{file_info.Name}_%s{first_ts}_%s{now_ts}.log")
+            let roll_file_name: string = (file_info.FullName).Replace($"{file_info.Name}", $"{file_info.Name}_%s{first_ts}_%s{now_ts}.log")
             File.Move(logFile, roll_file_name)
              
 
