@@ -30,12 +30,17 @@ let main args =
 
     // register existing scripts 
     let existingScripts: string array = cwTransactionWatcher.registerExistingScripts (appConfig.scriptDirs |> List.toArray)
+    logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"transactions registered %s{existingScripts.ToString()}"
 
     // set up transaction watchers
-    let srcWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Source) (appConfig.scriptDirs |> List.toArray)
+    let srcWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Source) (appConfig.scriptDirs |> List.toArray)    
     let stagingWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Staging) ([| stagingDir |])
+    logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"watchers created for source and staging directories"
 
-    let runner: TransactionRunner = TransactionRunner.init fsiSaLocation appConfig.maxThreadCount
+
+    let runner: TransactionRunner = TransactionRunner.init fsiSaLocation appConfig.maxThreadCount logger cweedLogFile
+    logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"transaction runner initialized"
+
 
     while true do 
         Threading.Thread.Sleep(100)
