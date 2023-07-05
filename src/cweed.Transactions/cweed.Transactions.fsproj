@@ -6,7 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="cwTransactions.fs" />
+    <Compile Include="cwTransactionsBuilder.fs" />
+    <Compile Include="cwTransactionsRegister.fs" />
+    <Compile Include="cwTransactionsRunner.fs" />
+    <Compile Include="cwTransactionsWatcher.fs" />
   </ItemGroup>
 
   <ItemGroup>

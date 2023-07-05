@@ -1,6 +1,7 @@
 ﻿open cweed.AppConfiguration
-open cweed.CwTransactions
-open cweed.CwTransactions.TransactionRunner
+open cwTransactions
+open cwTransactions.cwTransactions
+open cwTransactions.cwTransactionRunner
 open cwLogger.Logger
 
 open System
@@ -28,11 +29,11 @@ let main args =
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"program initialzied with settings: {appConfig}"
 
     // register existing scripts 
-    let existingScripts: string array = TransactionWatcher.registerExistingScripts (appConfig.scriptDirs |> List.toArray)
+    let existingScripts: string array = cwTransactionWatcher.registerExistingScripts (appConfig.scriptDirs |> List.toArray)
 
     // set up transaction watchers
-    let srcWatcherList: FileSystemWatcher array = TransactionWatcher.createForDirs (TransactionWatcher.WatcherType.Source) (appConfig.scriptDirs |> List.toArray)
-    let stagingWatcherList: FileSystemWatcher array = TransactionWatcher.createForDirs (TransactionWatcher.WatcherType.Staging) ([| stagingDir |])
+    let srcWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Source) (appConfig.scriptDirs |> List.toArray)
+    let stagingWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Staging) ([| stagingDir |])
 
     let runner: TransactionRunner = TransactionRunner.init fsiSaLocation appConfig.maxThreadCount
 
