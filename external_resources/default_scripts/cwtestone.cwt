@@ -1,7 +1,8 @@
+cwt "testOne" 0 (fun _ -> 
     //this is an F# function body, it's whitespace enforced
 
     //go to url
-    url "http://lefthandedgoat.github.io/canopy/testpages/"
+    goto "http://lefthandedgoat.github.io/canopy/testpages/"
 
     //assert that the element with an id of 'welcome' has
     //the text 'Welcome'
@@ -19,3 +20,4 @@
     "#button_clicked" == "button not clicked"
     click "#button"
     "#button_clicked" == "button clicked"
+)

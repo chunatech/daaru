@@ -110,7 +110,6 @@ let requestCredentials (commandArgs: string list): Net.NetworkCredential =
 //----------------------------------------------------------------------
 // Canopy configuration
 
-let screenShotDir: string = DirectoryInfo(@"__SCREENSHOT_DIR__").FullName
 canopy.configuration.chromeDir <- @"__CHROME_DRIVER_DIR__"  // TODO: Adjust template for possiblity of multiple browsers
 canopy.configuration.autoPinBrowserRightOnLaunch <- false
 
@@ -131,7 +130,7 @@ start browserWO
 context "Synthetic Transactions"  // TODO: Template from configuration
 
 __TRANSACTION_CONFIG__
-canopy.configuration.failScreenshotPath <- screenShotDir
+canopy.configuration.failScreenshotPath <- @"__SCREENSHOT_DIR__"
 
 __TRANSACTION_TESTS__
 
