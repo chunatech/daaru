@@ -8,10 +8,10 @@ echo "Removing old build files at: ${OUTDIR}"
 rm $OUTDIR/cweed
 rm $OUTDIR/cweed.pdb
 rm -rf $OUTDIR/fsi_standalone/
-rm -rf cweed/bin
-rm -rf fsi_standalone/bin
-rm -rf cweed/obj
-rm -rf fsi_standalone/obj
+rm -rf src/cweed/bin
+rm -rf src/fsi_standalone/bin
+rm -rf src/cweed/obj
+rm -rf src/fsi_standalone/obj
 
 dotnet publish ./src/cweed/cweed.fsproj -c Release -r $1 -o $OUTDIR --self-contained && \
 dotnet publish ./src/fsi_standalone/fsi_standalone.fsproj -c Release -r $1 -o $OUTDIR/fsi_standalone --self-contained && \

@@ -138,7 +138,6 @@ module TransactionBuilder =
 
                         // TODO: 
                         // ADD TRANSACTION CONFIG 
-                        // ADD TRANSACTION TESTS 
 
                         // an oridinary line 
                         | _ -> _buildFromTemplate tConfig lines result @ [line]
