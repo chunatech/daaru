@@ -6,6 +6,7 @@ module Utils =
     open System.IO
 
 
+
     module DateTimeHandlers = 
         open System
 
@@ -59,6 +60,7 @@ module Utils =
                 match tryDate with 
                 | (true, dt: DateTime) -> dt |> Ok 
                 | _ -> $"TimeStamp.tryParse() error parsing value %s{ts}" |> Error
+
 
 
     module CsvTools = 
@@ -137,6 +139,7 @@ module Utils =
                 //TODO: Write error to log
 
 
+
     module FileTools =
         /// takes in a file path and a specified size in megabytes.  if the target file is over the
         /// specified size, the file is renamed to have a timestamp appended.  file extension is
@@ -153,6 +156,7 @@ module Utils =
                             $"filepath_%s{dtString}"
                     File.Move(filepath, newName)
         
+
         /// takes in a file path, a specified size in megabytes, a count of lines to leave behind in
         /// the original file, and a bool indicating whether the file has a header or not.  if the
         /// target file is over the specified size, all of the file's content, except specified number
@@ -179,6 +183,7 @@ module Utils =
                     
                     File.WriteAllLines(newName, rolledFileContent)
                     File.WriteAllLines(filepath, remainingFileContent)
+
 
 
     module FilePathDecoder =
