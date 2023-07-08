@@ -6,11 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
+    <Compile Include="Library.fs" />
   </ItemGroup>
 
 </Project>

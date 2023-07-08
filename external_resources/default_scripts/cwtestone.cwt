@@ -1,3 +1,5 @@
+useCase "cweed" "Test cweed transactions" 0
+
 cwt "testOne" 0 (fun _ -> 
     //this is an F# function body, it's whitespace enforced
 
