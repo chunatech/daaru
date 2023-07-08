@@ -11,13 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Program.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\cweed.Configuration\cweed.Configuration.fsproj" />
     <ProjectReference Include="..\cweed.Transactions\cweed.Transactions.fsproj" />
     <ProjectReference Include="..\cwLogger\cwLogger.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
 </Project>

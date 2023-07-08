@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="cwTransactions.fs" />
     <Compile Include="cwTransactionsBuilder.fs" />
     <Compile Include="cwTransactionsRegister.fs" />
@@ -17,10 +21,6 @@
     <ProjectReference Include="..\cweed.Configuration\cweed.Configuration.fsproj" />
     <ProjectReference Include="..\cweed.Utils\cweed.Utils.fsproj" />
     <ProjectReference Include="..\cwLogger\cwLogger.fsproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
   </ItemGroup>
 
 </Project>

@@ -10,12 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Program.fs" />
+    <PackageReference Include="canopy" Version="2.1.5" />
+    <PackageReference Include="FSharp.Compiler.Service" Version="41.0.7" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="canopy" Version="2.1.5" />
-    <PackageReference Include="FSharp.Compiler.Service" Version="41.0.7" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
 </Project>
