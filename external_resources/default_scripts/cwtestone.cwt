@@ -3,6 +3,7 @@ cwt "testOne" 0 (fun _ ->
 
     //go to url
     goto "http://lefthandedgoat.github.io/canopy/testpages/"
+    printfn "[[LOG]]User generated log test."
 
     //assert that the element with an id of 'welcome' has
     //the text 'Welcome'

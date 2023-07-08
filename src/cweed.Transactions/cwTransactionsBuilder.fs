@@ -15,6 +15,8 @@ module TransactionBuilder =
     /// internal staging directory. this is where cweed stages the built  
     /// scripts that are actually run by the transaction runner
     let mutable stagingDir: string = Path.Join(System.AppContext.BaseDirectory, "staging")
+    let mutable logBaseDir: string = _config.logs.LogDirectory
+    let mutable resultsBaseDir: string = _config.resultsDirPath
     
     /// this directory is where the templates are located. a default template is provided at this time. 
     let templatesDir: string = Path.Join(AppContext.BaseDirectory, "templates")
@@ -64,10 +66,10 @@ module TransactionBuilder =
 
 
     let private _buildTransactionFileContents (tConfig: TransactionConfiguration) : string array = 
-        let header = _buildHeader tConfig
+        let header: string array = _buildHeader tConfig
         let testName: string array = [| $"\"{Path.GetFileNameWithoutExtension(tConfig.scriptPath)}\" &&& fun _ ->" |]
         let testContent: string array = File.ReadAllLines(tConfig.scriptPath)
-        let footer = [|
+        let footer: string array = [|
             "run()";
             "quit(browserWO)";
         |]
@@ -93,19 +95,19 @@ module TransactionBuilder =
                         | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__") -> 
                             match _config.credentialsRequestScript with 
                             | Some (cfg: CredentialsRequestScriptConfiguration) -> 
-                                let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", cfg.credRunnerPath)
+                                let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", cfg.credRunnerPath)
                                 _buildFromTemplate tConfig lines result @ ([line'])
                             | None -> 
-                                let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", "")
+                                let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", "")
                                 _buildFromTemplate tConfig lines result @ ([line'])
 
                         | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT__") ->
                             match _config.credentialsRequestScript with 
                             | Some (cfg: CredentialsRequestScriptConfiguration) -> 
-                                let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", cfg.credScriptPath)
+                                let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", cfg.credScriptPath)
                                 _buildFromTemplate tConfig lines result @ ([line'])
                             | None -> 
-                                let line' = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", "")
+                                let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", "")
                                 _buildFromTemplate tConfig lines result @ [line']                                
                         
                         | (line: string) when line.Contains("__SCREENSHOT_DIR__") -> 
@@ -137,41 +139,33 @@ module TransactionBuilder =
                         // TODO: 
                         // ADD TRANSACTION CONFIG 
                         // ADD TRANSACTION TESTS 
-                        // ADD LOGGER LINES PARSING 
-                        // ADD RESULTS PARSING 
 
                         // an oridinary line 
                         | _ -> _buildFromTemplate tConfig lines result @ [line]
 
-    let private _processCwtFromTemplate (tConfig) : option<TransactionConfiguration> = 
+    let private _processCwtFromTemplate (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
         let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
-        let sourceDir: string = Path.GetDirectoryName(sourcePath)
+        let nameWithoutExt: string = Path.GetFileNameWithoutExtension(sourcePath)
         
         // create the path for the staging file
-        let stagingFilePath = sourcePath.Replace(sourceDir, stagingDir).Replace(".cwt", ".fsx")
+        let stagingFilePath: string = Path.Join(stagingDir, $"%s{nameWithoutExt}.fsx")
         // first read in template. currenltly only supporting default template. if this can't be read in then exit the program we 
         // wont be able to construct any scripts.
-        let templateContents = 
+        let templateContents: string array = 
             try File.ReadAllLines(Path.Join(templatesDir, "default.template")) 
-            with exn -> 
+            with (exn: exn) -> 
                 exit 0
-        let templateContents' = templateContents
+        let templateContents': string array = templateContents
         templateContents' |> Array.Reverse
 
-        let result = 
+        let result: string list = 
             _buildFromTemplate tConfig (templateContents' |> Array.toList) []
 
-        let logPath: string = 
-            stagingFilePath.Replace(@"/staging/",@"/logs/")
-                            .Replace(@"\\staging\\", @"\logs\")
-                            .Replace(@".fsx",@".log")
+        let logPath: string = Path.Join(logBaseDir, $"%s{nameWithoutExt}.log")
 
-        let resultsPath: string = 
-            stagingFilePath.Replace(@"/staging/",@"/results/")
-                            .Replace(@"\staging\", @"\results\")
-                            .Replace(@".fsx",@"_results.csv")
+        let resultsPath: string = Path.Join(resultsBaseDir, $"%s{nameWithoutExt}_results.csv")
 
-        for fp in [ stagingFilePath; logPath; resultsPath ] do
+        for fp: string in [ stagingFilePath; logPath; resultsPath ] do
             // create staging directory mirror of target script
             Directory.CreateDirectory (Path.GetDirectoryName(fp)) 
             |> ignore
@@ -193,24 +187,18 @@ module TransactionBuilder =
     let private _processFsx (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
         let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
         // printfn $"sourcePath: %s{sourcePath}"
-        let sourceDir: string = Path.GetDirectoryName(sourcePath)
+        let nameWithoutExt: string = Path.GetFileNameWithoutExtension(sourcePath)
         // create the path for the staging file
-        let stagingFilePath: string = sourcePath.Replace(sourceDir, stagingDir)
+        let stagingFilePath: string = Path.Join(stagingDir, $"%s{nameWithoutExt}.fsx")
         // printfn $"stagingFilePath: %s{stagingFilePath}"
 
         // create path for transaction log file
-        let logPath: string =
-            stagingFilePath.Replace(@"/staging/",@"/logs/")
-                            .Replace(@"\\staging\\", @"\logs\")
-                            .Replace(@".fsx",@".log")
+        let logPath: string = Path.Join(logBaseDir, $"%s{nameWithoutExt}.log")
         
         // create path for transaction _results.csv file
-        let resultsPath: string =
-            stagingFilePath.Replace(@"/staging/",@"/results/")
-                            .Replace(@"\\staging\\", @"\results\")
-                            .Replace(@".fsx",@"_results.csv")
+        let resultsPath: string = Path.Join(resultsBaseDir, $"%s{nameWithoutExt}_results.csv")
 
-        for fp in [ stagingFilePath; logPath; resultsPath ] do
+        for fp: string in [ stagingFilePath; logPath; resultsPath ] do
             // create staging directory mirror
             Directory.CreateDirectory (Path.GetDirectoryName(fp))
             |> ignore

@@ -37,8 +37,8 @@ let main args =
     let stagingWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Staging) ([| stagingDir |])
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"watchers created for source and staging directories"
 
-
-    let runner: TransactionRunner = TransactionRunner.init fsiSaLocation appConfig.maxThreadCount logger cweedLogFile
+    // init TransactionRunner
+    let runner: TransactionRunner = TransactionRunner.init fsiSaLocation appConfig logger cweedLogFile
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"transaction runner initialized"
 
 

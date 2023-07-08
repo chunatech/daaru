@@ -25,3 +25,4 @@ cp -prnv external_resources/default_scripts/* $OUTDIR/scripts/
 cp -prnv external_resources/default_libs/* $OUTDIR/libs/
 cp -prnv external_resources/default_config/* $OUTDIR/config/
 cp -prnv external_resources/default_templates/* $OUTDIR/templates/
+cp -prnv external_resources/default_results_processing/* $OUTDIR/results/

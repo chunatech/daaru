@@ -13,10 +13,12 @@ module cwTransactionRunner =
     open cweed.Utils
 
     open cwTransactions
+    open cweed.AppConfiguration
     open cwLogger.Logger
     open System.Reflection
 
     type TransactionRunner = {
+        appConfig: AppConfiguration
         fsiPath: string
         queue: ConcurrentQueue<Transaction>
         runTimer: Timer
@@ -25,12 +27,13 @@ module cwTransactionRunner =
         logFile: String
     }
     with 
-        static member init (fsiPath: string) (threadCount: int32) (logger: Logger) (logFile: string) = 
+        static member init (fsiPath: string) (appConfig: AppConfiguration) (logger: Logger) (logFile: string) = 
             let tr: TransactionRunner = {
+                appConfig = appConfig
                 fsiPath = fsiPath
                 queue = ConcurrentQueue<Transaction>()
                 runTimer = new Timer(60_000)
-                threadTracker = threadCount |> fun (tc: int32) ->
+                threadTracker = appConfig.maxThreadCount |> fun (tc: int32) ->
                     let cq: ConcurrentQueue<int32> = ConcurrentQueue<int32>()
                     for t=1 to tc do  // for x to y range is inclusive
                         cq.Enqueue t
@@ -65,13 +68,13 @@ module cwTransactionRunner =
 
 
         member private this.handleTransactionProcessExit (t: Transaction) (threadId : int32) (e: EventArgs) =
-            let log = this.logger.Log this.logFile (MethodBase.GetCurrentMethod())
+            let log = this.logger.Log t.Configuration.logPath (MethodBase.GetCurrentMethod())
             log Severity.Debug $"running handleTransactionProcessExit for %s{t.Configuration.scriptPath}"
             // TODO: Build out logic here to handle result state (Pass/Fail, etc..)
             this.threadTracker.Enqueue threadId
             log Severity.Debug $"returning thread %d{threadId}"
 
-            log Severity.Info $"%s{t.Configuration.scriptPath} process exited at %s{DateTime.Now.ToString()}"
+            this.logger.Log this.logFile (MethodBase.GetCurrentMethod()) Severity.Info $"%s{t.Configuration.scriptPath} process exited at %s{DateTime.Now.ToString()}"
 
             let latest: option<Transaction> = cwTransactionRegister.get t.Configuration.scriptPath
 
@@ -106,12 +109,60 @@ module cwTransactionRunner =
                 log Severity.Debug $"running cwTransactionRegister update handle"
                 cwTransactionRegister.update lt
                 log Severity.Info $"%A{lt}"
-            | None ->
-                log Severity.Debug "no latest transaction detected this cycle"
 
+                // If appConfig contains ResultsProcessingScript definition
+                match this.appConfig.resultsProcessingScript with
+                | Some (rpsc: ResultsProcessingScriptConfiguration) ->
+                    let mutable runnerExists: bool = true
+                    let mutable scriptExists: bool = true
+
+                    if not <| File.Exists(rpsc.resultsRunnerPath.Replace("\\","\\\\")) then
+                        runnerExists <- false
+                        log Severity.Error $"unable to find processing script runner at '%s{rpsc.resultsRunnerPath}'"
+
+                    if not <| File.Exists(rpsc.resultsScriptPath) then
+                        scriptExists <- false
+                        log Severity.Error $"unable to find processing script at '%s{rpsc.resultsScriptPath}'"
+
+                    if runnerExists && scriptExists then
+                        let cleanRunnerPath: string = rpsc.resultsRunnerPath.Replace("\\","/")
+                        // let psi: ProcessStartInfo = new ProcessStartInfo(cleanRunnerPath, $"\"%s{rpsc.resultsScriptPath}\" \"%s{lt.Configuration.resultsPath}\"")
+                        let psi: ProcessStartInfo = new ProcessStartInfo(cleanRunnerPath)
+                        psi.ArgumentList.Add(rpsc.resultsScriptPath.Replace("\\","/"))
+                        psi.ArgumentList.Add(lt.Configuration.resultsPath)
+                        psi.UseShellExecute <- false
+                        psi.RedirectStandardOutput <- true
+                        psi.RedirectStandardError <- true
+
+                        log Severity.Info $"launching results processing script: \"%s{rpsc.resultsRunnerPath} '%s{rpsc.resultsScriptPath}' '%s{lt.Configuration.resultsPath}'\"" 
+                        let p: Process = new Process()
+                        p.StartInfo <- psi
+                        p.Start() |> ignore
+                        let pso: string = p.StandardOutput.ReadToEnd()
+                        let pse: string = p.StandardError.ReadToEnd()
+
+                        if String.IsNullOrEmpty(pse) then
+                            if String.IsNullOrEmpty(pso) then
+                                log Severity.Info "processing script produced no output"
+                            else
+                                let logOut: string = pso.Replace("\n", "; ").Replace("\r", "")
+                                log Severity.Info $"processing script output: %s{logOut}"
+                        else
+                            let logErr: string = pse.Replace("\n", "; ").Replace("\r", "")
+                            log Severity.Error $"processing script error: %s{logErr}"
+
+                | None ->
+                    log Severity.Info "no results processing script configured"
+
+            | None ->
+                log Severity.Critical "something has gone wrong, transaction not found in register"
+                // usually don't want to process logs outside of main, but the logs need 
+                // to be cleaned up before exit call
+                this.logger.ProcessQueue() 
+                exit -1
 
         member private this.handleTransactionOutput (t: Transaction) (e: DataReceivedEventArgs) =
-            let log = this.logger.Log this.logFile (MethodBase.GetCurrentMethod())
+            let log = this.logger.Log t.Configuration.logPath (MethodBase.GetCurrentMethod())
             log Severity.Debug $"running handleTransactionOutput for %s{t.Configuration.stagedScriptPath}"
             
             if String.IsNullOrEmpty(e.Data) |> not then
@@ -170,6 +221,7 @@ module cwTransactionRunner =
 
                             log Severity.Debug $"running cwTransactionRegsiter.update hook for %s{lt.Configuration.scriptPath}"
                             cwTransactionRegister.update lt
+
                     // SKIPPED:
                     | (text: string) when text.EndsWith(" skipped") ->
                         log Severity.Debug $"transaction skipped output detected"
@@ -190,6 +242,7 @@ module cwTransactionRunner =
 
                         log Severity.Debug $"appending results to csv at %s{lt.Configuration.resultsPath}"
                         CsvTools.appendStringToCSVFile lt.Configuration.resultsPath header results
+
                     // LOG:
                     | (text: string) when text.StartsWith("[[LOG]]") ->
                         log Severity.Debug $"log output detected"
@@ -211,21 +264,21 @@ module cwTransactionRunner =
                             sev, (msg.TrimStart())
 
                         
-                        let sev, msg = logFromParsedOutput (e.Data.Replace("[[LOG]]", ""))
+                        let (sev: Severity), (msg: string) = logFromParsedOutput (e.Data.Replace("[[LOG]]", ""))
 
-                        log Severity.Debug $"generating log at %s{lt.Configuration.logPath} for %s{lt.Configuration.scriptPath}"
-                        this.logger.Log lt.Configuration.logPath (MethodBase.GetCurrentMethod()) sev msg
+                        this.logger.Log this.logFile (MethodBase.GetCurrentMethod()) Severity.Debug $"generating log at %s{t.Configuration.logPath} for %s{lt.Configuration.scriptPath}"
+                        log sev msg
 
                     // Change this to a log:
                     | _ ->
                         lt.LastRunDetails.UnhandledOutput <- lt.LastRunDetails.UnhandledOutput + 1
                         cwTransactionRegister.update lt
-                        // TODO: Maybe add setting to enable/disable this:
-                        // consider as debug setting in future when debug settings are programmed. for now keep as .unhandled file -Tina
-                        lt.WriteOutUnhandled STDOUT e.Data
+                        log Severity.Debug $"Unhandled output - Stream: STDOUT, Output: %s{e.Data}"
+                        if this.logger.SeverityThreshold = Severity.Debug then
+                            lt.WriteOutUnhandled STDOUT e.Data
 
                 | None ->
-                    log Severity.Critical $"reached unreachable branch"
+                    log Severity.Critical "something has gone wrong, transaction not found in register"
                     // usually don't want to process logs outside of main, but the logs need 
                     // to be cleaned up before exit call
                     this.logger.ProcessQueue() 
@@ -233,14 +286,13 @@ module cwTransactionRunner =
         
 
         member private this.handleTransactionError (t: Transaction) (e: DataReceivedEventArgs) =
-            let log = this.logger.Log this.logFile (MethodBase.GetCurrentMethod())
+            let log = this.logger.Log t.Configuration.logPath (MethodBase.GetCurrentMethod())
 
             // TODO: Build out logic here for error/failure parsing and handling
             if String.IsNullOrEmpty(e.Data) |> not then
                 let latest: option<Transaction> = cwTransactionRegister.get t.Configuration.scriptPath
                 match latest with
                 | Some (lt: Transaction) ->
-                    log Severity.Debug $"transaction error detected for %s{lt.Configuration.scriptPath}"
                     match e.Data with
                     // Version mismatch:
                     | (text: string) when text.Contains("[WARNING]: This version of ChromeDriver has not been tested with Chrome version") ->
@@ -254,11 +306,16 @@ module cwTransactionRunner =
                     //     ignore text
                     | _ ->
                         lt.LastRunDetails.UnhandledErrors <- lt.LastRunDetails.UnhandledErrors + 1
-                        log Severity.Debug $"unhandled errors incremented for transaction %s{lt.Configuration.scriptPath} to %d{lt.LastRunDetails.UnhandledErrors}"
                         cwTransactionRegister.update lt
-                        lt.WriteOutUnhandled STDERR e.Data
+                        log Severity.Error $"%s{e.Data}"
+                        if this.logger.SeverityThreshold = Severity.Debug then
+                            lt.WriteOutUnhandled STDERR e.Data
                 | None ->
-                   ()
+                    log Severity.Critical $"reached unreachable branch"
+                    // usually don't want to process logs outside of main, but the logs need 
+                    // to be cleaned up before exit call
+                    this.logger.ProcessQueue() 
+                    exit -1
 
 
         member this.runTransactions () =

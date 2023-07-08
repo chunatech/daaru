@@ -69,6 +69,21 @@ module AppConfiguration =
             )
 
 
+    /// user defined results processing script 
+    type ResultsProcessingScriptConfiguration = {
+        resultsScriptPath: string
+        resultsRunnerPath: string
+    } 
+    with 
+        static member Decoder: Decoder<ResultsProcessingScriptConfiguration> = 
+            Decode.object(fun get -> 
+                {
+                    resultsScriptPath = get.Required.Field "resultsScriptPath" Decode.string
+                    resultsRunnerPath = get.Required.Field "resultsRunnerPath" Decode.string
+                }
+            )
+
+
     /// user defined credentials script 
     type CredentialsRequestScriptConfiguration = {
         credScriptPath: string
@@ -114,6 +129,10 @@ module AppConfiguration =
         /// driver locations 
         browsers: BrowserConfiguration list 
 
+        /// user defined results processing script, to take user defined actions on
+        /// the results published to the _results.csv files for each transaction
+        resultsProcessingScript: ResultsProcessingScriptConfiguration option
+
         /// user defined credentials request script for use in transactions
         /// with the default template. If this is not specified by the user, it 
         /// will be ignored with the assumption that the user isn't going to use that 
@@ -132,6 +151,7 @@ module AppConfiguration =
             pollingInterval = 5
             logs = LoggingConfiguration.Default
             browsers = [ BrowserConfiguration.Default ] 
+            resultsProcessingScript = None
             credentialsRequestScript = None
         }
 
@@ -158,6 +178,8 @@ module AppConfiguration =
                     browsers =
                         get.Optional.Field "browsers" (Decode.list BrowserConfiguration.Decoder)
                         |> Option.defaultValue AppConfiguration.Default.browsers 
+                    resultsProcessingScript = 
+                        get.Optional.Field "resultsProcessingScript" (ResultsProcessingScriptConfiguration.Decoder)
                     credentialsRequestScript = 
                         get.Optional.Field "credentialsRequestScript" (CredentialsRequestScriptConfiguration.Decoder)
                 }
