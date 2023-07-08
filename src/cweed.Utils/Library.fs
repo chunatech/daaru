@@ -2,6 +2,7 @@
 
 module Utils = 
     open Thoth.Json.Net
+    open System
     open System.IO
 
 
@@ -42,13 +43,13 @@ module Utils =
         /// module for timestamp creation that can parse a ts from the format str
         module TimeStamp = 
             open System 
-            let formatStr = @"yyyyMMdd_HHmmss.fff"
+            let formatStr: string = @"yyyyMMdd_HHmmss.fff"
             type T = TimeStamp of string
-            let value (TimeStamp ts) = ts 
+            let value (TimeStamp (ts: string)) = ts 
             let create (dt: DateTime) : T = ((dt).ToString(formatStr)) |> TimeStamp
-            let tryParse (TimeStamp ts) : Result<DateTime, string> = 
+            let tryParse (TimeStamp (ts: string)) : Result<DateTime, string> = 
 
-                let tryDate = DateTime.TryParseExact(
+                let tryDate: bool * DateTime = DateTime.TryParseExact(
                     ts, 
                     formatStr, 
                     Globalization.CultureInfo.InvariantCulture,
@@ -56,7 +57,7 @@ module Utils =
                 )
 
                 match tryDate with 
-                | (true, dt) -> dt |> Ok 
+                | (true, dt: DateTime) -> dt |> Ok 
                 | _ -> $"TimeStamp.tryParse() error parsing value %s{ts}" |> Error
 
 
@@ -136,9 +137,41 @@ module Utils =
                 //TODO: Write error to log
 
 
+    module FileTools =
+        /// takes in a file path and a specified size in megabytes.  if the target file is over the
+        /// specified size, the file is renamed to have a timestamp appended.
+        let RollFileBySize (filepath: string) (sizeLimitMB: int64) =
+            if File.Exists(filepath) then
+                if FileInfo(filepath).Length >= sizeLimitMB * int64(1024*1024) then
+                    let dtString: string = DateTime.Now.ToString("yyyyMMdd_hhmmssfff")
+                    let newName: string = filepath.Replace(".csv", $"_%s{dtString}.csv")
+                    File.Move(filepath, newName)
+        
+        /// takes in a file path, a specified size in megabytes, a count of lines to leave behind in
+        /// the original file, and a bool indicating whether the file has a header or not.  if the
+        /// target file is over the specified size, all of the file's content, except specified number
+        /// of lines to leave behind.  If header is true, then a copy of the first line of the file
+        /// will also be left behind, at the top of the file.  all other content is written to a new
+        /// file with the same name as the original file, but with a timestamp appended to it. 
+        let PartialRollFileBySize (filepath: string) (sizeLimitMB: int64) (leaveLines: int) (header: bool) =
+            if File.Exists(filepath) then
+                if FileInfo(filepath).Length >= sizeLimitMB * int64(1024*1024) then
+                    let dtString: string = DateTime.Now.ToString("yyyyMMdd_hhmmssff")
+                    let newName: string = filepath.Replace(".csv", $"_%s{dtString}.csv")
+                    let fileContent: string array = File.ReadAllLines(filepath)
+                    let rolledFileContent: string array = fileContent[0..(fileContent.Length - leaveLines - 1)]
+                    let mutable remainingFileContent: string array = fileContent[(fileContent.Length - leaveLines)..(fileContent.Length-1)]
+                    
+                    if header then
+                        remainingFileContent <- Array.append [|fileContent[0]|] remainingFileContent
+                    
+                    File.WriteAllLines(newName, rolledFileContent)
+                    File.WriteAllLines(filepath, remainingFileContent)
+
+
     module FilePathDecoder =
         let Decoder: Decoder<string> = 
-            fun (path) (value: JsonValue) -> 
+            fun (path: string) (value: JsonValue) -> 
                 let v: Newtonsoft.Json.Linq.JValue = unbox value  
                 // if the filepath given is malformed, return an error 
                 if not <| (System.Uri.IsWellFormedUriString(v.ToString(), System.UriKind.RelativeOrAbsolute)) then
@@ -153,7 +186,7 @@ module Utils =
 
     module DirPathDecoder = 
         let Decoder: Decoder<string> = 
-            fun (path) (value: JsonValue) -> 
+            fun (path: string) (value: JsonValue) -> 
                 let v: Newtonsoft.Json.Linq.JValue = unbox value  
                 let dirpath: string = v.ToString()
                 // if the filepath given is malformed, return an error 

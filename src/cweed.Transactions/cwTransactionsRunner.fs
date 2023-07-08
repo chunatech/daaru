@@ -242,6 +242,7 @@ module cwTransactionRunner =
 
                         log Severity.Debug $"appending results to csv at %s{lt.Configuration.resultsPath}"
                         CsvTools.appendStringToCSVFile lt.Configuration.resultsPath header results
+                        FileTools.PartialRollFileBySize lt.Configuration.resultsPath 10 20 true
 
                     // LOG:
                     | (text: string) when text.StartsWith("[[LOG]]") ->
