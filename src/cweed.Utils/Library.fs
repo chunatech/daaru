@@ -139,12 +139,18 @@ module Utils =
 
     module FileTools =
         /// takes in a file path and a specified size in megabytes.  if the target file is over the
-        /// specified size, the file is renamed to have a timestamp appended.
+        /// specified size, the file is renamed to have a timestamp appended.  file extension is
+        /// maintained.
         let RollFileBySize (filepath: string) (sizeLimitMB: int64) =
             if File.Exists(filepath) then
                 if FileInfo(filepath).Length >= sizeLimitMB * int64(1024*1024) then
                     let dtString: string = DateTime.Now.ToString("yyyyMMdd_hhmmssfff")
-                    let newName: string = filepath.Replace(".csv", $"_%s{dtString}.csv")
+                    let fileExt: string = FileInfo(filepath).Extension
+                    let newName: string = 
+                        if filepath.Contains('.') then
+                            filepath.Replace($"%s{fileExt}", $"_%s{dtString}%s{fileExt}")
+                        else
+                            $"filepath_%s{dtString}"
                     File.Move(filepath, newName)
         
         /// takes in a file path, a specified size in megabytes, a count of lines to leave behind in
@@ -152,12 +158,18 @@ module Utils =
         /// target file is over the specified size, all of the file's content, except specified number
         /// of lines to leave behind.  If header is true, then a copy of the first line of the file
         /// will also be left behind, at the top of the file.  all other content is written to a new
-        /// file with the same name as the original file, but with a timestamp appended to it. 
+        /// file with the same name as the original file, but with a timestamp appended to it. file
+        /// extension is maintained. 
         let PartialRollFileBySize (filepath: string) (sizeLimitMB: int64) (leaveLines: int) (header: bool) =
             if File.Exists(filepath) then
                 if FileInfo(filepath).Length >= sizeLimitMB * int64(1024*1024) then
                     let dtString: string = DateTime.Now.ToString("yyyyMMdd_hhmmssff")
-                    let newName: string = filepath.Replace(".csv", $"_%s{dtString}.csv")
+                    let fileExt: string = FileInfo(filepath).Extension
+                    let newName: string = 
+                        if filepath.Contains('.') then
+                            filepath.Replace($"%s{fileExt}", $"_%s{dtString}%s{fileExt}")
+                        else
+                            $"filepath_%s{dtString}"
                     let fileContent: string array = File.ReadAllLines(filepath)
                     let rolledFileContent: string array = fileContent[0..(fileContent.Length - leaveLines - 1)]
                     let mutable remainingFileContent: string array = fileContent[(fileContent.Length - leaveLines)..(fileContent.Length-1)]
