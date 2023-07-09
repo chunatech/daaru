@@ -13,17 +13,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\cweed.Configuration\cweed.Configuration.fsproj" />
+    <ProjectReference Include="..\cweed.Utils\cweed.Utils.fsproj" />
+    <ProjectReference Include="..\cwLogger\cwLogger.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="cwTransactions.fs" />
     <Compile Include="cwTransactionsBuilder.fs" />
     <Compile Include="cwTransactionsRegister.fs" />
     <Compile Include="cwTransactionsRunner.fs" />
     <Compile Include="cwTransactionsWatcher.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\cweed.Configuration\cweed.Configuration.fsproj" />
-    <ProjectReference Include="..\cweed.Utils\cweed.Utils.fsproj" />
-    <ProjectReference Include="..\cwLogger\cwLogger.fsproj" />
   </ItemGroup>
 
 </Project>

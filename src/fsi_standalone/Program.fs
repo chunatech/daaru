@@ -1,6 +1,7 @@
-open System.Globalization
-open System.Text
+open System
 open System.IO
+open System.Text
+open System.Globalization
 open FSharp.Compiler.Interactive.Shell
 
 // Init string builders to be used for output and error streams
@@ -17,9 +18,9 @@ let fsi: FsiEvaluationSession =
         // First arg in argv below may not be evaluated,
         // however subsequent args will be.
         // https://github.com/fsharp/fsharp-compiler-docs/issues/877
-            let fsiConfig: FsiEvaluationSessionHostConfig = FsiEvaluationSession.GetDefaultConfiguration()
-            let argv: string[] = [| "fsi.exe"; "--noninteractive"; "--multiemit-" |]
-            FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
+        let fsiConfig: FsiEvaluationSessionHostConfig = FsiEvaluationSession.GetDefaultConfiguration()
+        let argv: string[] = [| "fsi.exe"; "--noninteractive"; "--multiemit-" |]
+        FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
     with
     | (ex: exn) ->
         printfn "Error: %A" ex
@@ -36,22 +37,25 @@ let getOpen (path: string) =
 
 
 let getLoad (path: string) =
-        let path: string = Path.GetFullPath path
-        path.Replace("\\", "\\\\")
+    let path: string = Path.GetFullPath path
+    path.Replace("\\", "/")
 
 
 let evaluate (path: string) =
-    let filename: string = getOpen path
-    let load: string = getLoad path
+    // let filename: string = getOpen path
+    // let load: string = getLoad path
 
-    let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
-    if errs.Length > 0 then printfn "Load Errors : %A" errs
+    // let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
+    // if errs.Length > 0 then printfn "Load Errors : %A" errs
 
-    let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
-    if errs.Length > 0 then printfn "Open Errors : %A" errs
+    // let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "open \"%s\";;" filename)
+    // if errs.Length > 0 then printfn "Open Errors : %A" errs
 
-    let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "#quit;;")
-    if errs.Length > 0 then printfn "Quit Errors : %A" errs
+    // let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "#quit;;")
+    // if errs.Length > 0 then printfn "Quit Errors : %A" errs
+
+    let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalScriptNonThrowing(path)
+    if errs.Length > 0 then printfn "Script Errors : %s" (String.Join("; ", errs).Replace("\n", ", ").Replace("\r", ""))
 
     // match res with
     // | Choice1Of2 (Some (f: FsiValue)) ->
