@@ -1,12 +1,12 @@
 open System
 open System.IO
 open System.Text
-open System.Globalization
 open FSharp.Compiler.Interactive.Shell
 
 // Init string builders to be used for output and error streams
 let sbOut: StringBuilder = StringBuilder()
 let sbErr: StringBuilder = StringBuilder()
+
 
 let fsi: FsiEvaluationSession =
     let inStream: StringReader = new StringReader("")
@@ -29,39 +29,11 @@ let fsi: FsiEvaluationSession =
         raise ex
 
 
-let getOpen (path: string) =
-    let path: string = Path.GetFullPath path
-    let filename: string = Path.GetFileNameWithoutExtension path
-    let textInfo: TextInfo = (CultureInfo("en-US", false)).TextInfo
-    textInfo.ToTitleCase filename
-
-
-let getLoad (path: string) =
-    let path: string = Path.GetFullPath path
-    path.Replace("\\", "/")
-
-
 let evaluate (path: string) =
-    // let filename: string = getOpen path
-    // let load: string = getLoad path
-
-    // let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
-    // if errs.Length > 0 then printfn "Load Errors : %A" errs
-
-    // let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "open \"%s\";;" filename)
-    // if errs.Length > 0 then printfn "Open Errors : %A" errs
-
-    // let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalInteractionNonThrowing(sprintf "#quit;;")
-    // if errs.Length > 0 then printfn "Quit Errors : %A" errs
-
     let _, (errs: FSharp.Compiler.Diagnostics.FSharpDiagnostic[]) = fsi.EvalScriptNonThrowing(path)
     if errs.Length > 0 then printfn "Script Errors : %s" (String.Join("; ", errs).Replace("\n", ", ").Replace("\r", ""))
-
-    // match res with
-    // | Choice1Of2 (Some (f: FsiValue)) ->
-    //     f.ReflectionValue :?> Transformation |> Some
-    // | _ -> None
     ()
+
 
 [<EntryPoint>]
 let main argv =
