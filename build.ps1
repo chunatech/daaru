@@ -10,8 +10,8 @@ $OUTDIR = Join-Path $PSScriptRoot "build/release/$BuildTarget/cweed"
 
 Write-Output "Removing old build file at: $OUTDIR"
 
-Remove-Item (Join-Path $OUTDIR 'cw*') -Force
-Remove-Item (Join-Path $OUTDIR 'fsi_standalone') -Recurse -Force
+Remove-Item (Join-Path $OUTDIR 'cw*') -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $OUTDIR 'fsi_standalone') -Recurse -Force -ErrorAction SilentlyContinue
 
 if ($CleanBuild) {
     Remove-Item (Join-Path $PSScriptRoot 'src/*/bin') -Recurse -Force
