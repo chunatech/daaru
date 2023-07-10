@@ -131,6 +131,7 @@ context "Synthetic Transactions"  // TODO: Template from configuration
 
 __TRANSACTION_CONFIG__
 canopy.configuration.failScreenshotPath <- @"__SCREENSHOT_DIR__"
+canopy.configuration.failScreenshotFileName <- fun test suite -> System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm")
 
 __TRANSACTION_TESTS__
 

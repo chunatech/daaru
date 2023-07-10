@@ -117,6 +117,9 @@ module AppConfiguration =
         /// to run transactions in parallel 
         maxThreadCount: int
 
+        // max failure screenshots to keep
+        maxScreenshots: int
+
         /// how frequently cweed will poll for transactions to 
         /// run 
         pollingInterval: int
@@ -148,6 +151,7 @@ module AppConfiguration =
             screenshotDirPath =  (Path.Join(System.AppContext.BaseDirectory, "screenshots")) 
             resultsDirPath = (Path.Join(System.AppContext.BaseDirectory, "results"))
             maxThreadCount = 4
+            maxScreenshots = 3
             pollingInterval = 5
             logs = LoggingConfiguration.Default
             browsers = [ BrowserConfiguration.Default ] 
@@ -170,6 +174,8 @@ module AppConfiguration =
                         |> Option.defaultValue AppConfiguration.Default.resultsDirPath
                     maxThreadCount = 
                         get.Optional.Field "maxThreadCount" Decode.int |> Option.defaultValue 4
+                    maxScreenshots = 
+                        get.Optional.Field "maxScreenshots" Decode.int |> Option.defaultValue 3
                     pollingInterval = 
                         get.Optional.Field "pollingInterval" Decode.int |> Option.defaultValue 5
                     logs =

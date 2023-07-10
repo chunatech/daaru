@@ -111,7 +111,9 @@ module TransactionBuilder =
                                 _buildFromTemplate tConfig lines result @ [line']                                
                         
                         | (line: string) when line.Contains("__SCREENSHOT_DIR__") -> 
-                            let line': string = line.Replace("__SCREENSHOT_DIR__", _config.screenshotDirPath)
+
+                            let screenshotPath: string = _config.screenshotDirPath
+                            let line': string = line.Replace("__SCREENSHOT_DIR__", tConfig.screenshotPath)
                             _buildFromTemplate tConfig lines result @ ([line'])
 
 
@@ -148,6 +150,25 @@ module TransactionBuilder =
         
         // create the path for the staging file
         let stagingFilePath: string = Path.Join(stagingDir, $"%s{nameWithoutExt}.fsx")
+        let logPath: string = Path.Join(logBaseDir, $"%s{nameWithoutExt}.log")
+        let resultsPath: string = Path.Join(resultsBaseDir, $"%s{nameWithoutExt}_results.csv")
+        let screenshotPath: string = Path.Join(_config.screenshotDirPath, nameWithoutExt)
+
+        Directory.CreateDirectory screenshotPath |> ignore
+
+        for fp: string in [ stagingFilePath; logPath; resultsPath ] do
+            // create staging directory mirror of target script
+            Directory.CreateDirectory (Path.GetDirectoryName(fp)) 
+            |> ignore
+
+        let outTConfig: TransactionConfiguration = {
+            tConfig with 
+                stagedScriptPath = stagingFilePath
+                logPath = logPath
+                resultsPath = resultsPath
+                screenshotPath = screenshotPath
+        }
+
         // first read in template. currenltly only supporting default template. if this can't be read in then exit the program we 
         // wont be able to construct any scripts.
         let templateContents: string array = 
@@ -158,47 +179,31 @@ module TransactionBuilder =
         templateContents' |> Array.Reverse
 
         let result: string list = 
-            _buildFromTemplate tConfig (templateContents' |> Array.toList) []
-
-        let logPath: string = Path.Join(logBaseDir, $"%s{nameWithoutExt}.log")
-
-        let resultsPath: string = Path.Join(resultsBaseDir, $"%s{nameWithoutExt}_results.csv")
-
-        for fp: string in [ stagingFilePath; logPath; resultsPath ] do
-            // create staging directory mirror of target script
-            Directory.CreateDirectory (Path.GetDirectoryName(fp)) 
-            |> ignore
+            _buildFromTemplate outTConfig (templateContents' |> Array.toList) []
 
         // create the fsx
         File.WriteAllLines(stagingFilePath, result)
 
-        // TODO add some config with staged filepath
-        { tConfig with 
-            stagedScriptPath = stagingFilePath
-            logPath = logPath
-            resultsPath = resultsPath
-        }
-        |> Some
+        outTConfig |> Some
 
 
 
     // set up and copy fsx files into staging. return updated transaction configuration
     let private _processFsx (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
         let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
-        // printfn $"sourcePath: %s{sourcePath}"
         let nameWithoutExt: string = Path.GetFileNameWithoutExtension(sourcePath)
-        // create the path for the staging file
-        let stagingFilePath: string = Path.Join(stagingDir, $"%s{nameWithoutExt}.fsx")
-        // printfn $"stagingFilePath: %s{stagingFilePath}"
 
-        // create path for transaction log file
+        let stagingFilePath: string = Path.Join(stagingDir, $"%s{nameWithoutExt}.fsx")
         let logPath: string = Path.Join(logBaseDir, $"%s{nameWithoutExt}.log")
         
-        // create path for transaction _results.csv file
+        // These next two settings only do anything if the custom fsx is written a specific way
+        // TODO: Add ability for templated values to optionally be used in fsx scripts as well.
         let resultsPath: string = Path.Join(resultsBaseDir, $"%s{nameWithoutExt}_results.csv")
+        let screenshotPath: string = Path.Join(_config.screenshotDirPath, nameWithoutExt)
+
+        Directory.CreateDirectory screenshotPath |> ignore
 
         for fp: string in [ stagingFilePath; logPath; resultsPath ] do
-            // create staging directory mirror
             Directory.CreateDirectory (Path.GetDirectoryName(fp))
             |> ignore
         
@@ -210,6 +215,7 @@ module TransactionBuilder =
             stagedScriptPath = stagingFilePath
             logPath = logPath
             resultsPath = resultsPath
+            screenshotPath = screenshotPath
 
         }
         |> Some
@@ -231,6 +237,7 @@ module TransactionBuilder =
             stagedScriptPath = ""
             logPath = ""
             resultsPath = ""
+            screenshotPath = ""
             pollingInterval = _config.pollingInterval
             browser = browserConfigs[0].browser
             browserOptions = browserConfigs[0].browserOpts 

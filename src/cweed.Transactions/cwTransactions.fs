@@ -15,6 +15,7 @@ module cwTransactions =
         stagedScriptPath: string
         logPath: string
         resultsPath: string
+        screenshotPath: string
         pollingInterval: int
         browser: string
         browserOptions: string array

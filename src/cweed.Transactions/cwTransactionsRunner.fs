@@ -82,6 +82,13 @@ module cwTransactionRunner =
             | Some (lt: Transaction) ->
                 log Severity.Debug $"matching on latest transaction %s{lt.Configuration.scriptPath}"
 
+                let screenshots: string array = Directory.GetFiles(lt.Configuration.screenshotPath, "*.jpg")
+                screenshots |> Array.Sort
+                screenshots |> Array.Reverse
+                
+                for screenshot: string in screenshots[this.appConfig.maxScreenshots..screenshots.Length] do
+                    File.Delete screenshot
+
                 if lt.LastRunDetails.Failed > 0 then
                     lt.LastFailure <- DateTime.Now
                     log Severity.Debug $"failure detected at %s{lt.LastFailure.ToString()}"
