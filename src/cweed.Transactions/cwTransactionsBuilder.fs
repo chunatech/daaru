@@ -148,6 +148,20 @@ module TransactionBuilder =
             | _ -> _buildFromTemplate tConfig lines result @ [line]
 
 
+    let private parseCanopyConfigToList (cfg: CanopyConfiguration) : string list = 
+        let props: Reflection.PropertyInfo array = typeof<CanopyConfiguration>.GetProperties()
+        let mutable result: string list  = []
+        for prop: Reflection.PropertyInfo in props do
+            let key = prop.Name
+            match prop.GetValue(cfg) with 
+            | :? float as v -> 
+                let value = v.ToString();
+                let parsed = key + " <- " + value
+                result <- parsed::result
+            | _ -> ()
+        result
+            
+
     let private _processCwtFromTemplate (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
         let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
         let nameWithoutExt: string = Path.GetFileNameWithoutExtension(sourcePath)
@@ -168,7 +182,9 @@ module TransactionBuilder =
         // TODO: Figure out what to do about multiple browser configs
         let browserConfig: BrowserConfiguration = _config.browsers[0]
 
-        let canopyConfig: string list = _config.canopyConfig
+        let canopyConfig: string list = 
+            _config.canopyConfig 
+            |> parseCanopyConfigToList
 
         let outTConfig: TransactionConfiguration = {
             tConfig with 

@@ -105,16 +105,22 @@ module AppConfiguration =
         pageTimeout: float;
     }
     with 
+        static member Default: CanopyConfiguration = 
+            {
+                elementTimeout = 10.0
+                compareTimeout = 10.0
+                pageTimeout = 10.0
+            }        
         static member Decoder: Decoder<CanopyConfiguration> = 
             Decode.object (
                 fun get -> 
                     {
                         elementTimeout = get.Optional.Field "elementTimeout" Decode.float
-                        |> Option.defaultValue 10.0 
+                        |> Option.defaultValue CanopyConfiguration.Default.elementTimeout
                         compareTimeout = get.Optional.Field "compareTimeout" Decode.float
-                        |> Option.defaultValue 10.0
+                        |> Option.defaultValue CanopyConfiguration.Default.compareTimeout
                         pageTimeout = get.Optional.Field "pageTimeout" Decode.float
-                        |> Option.defaultValue 10.0
+                        |> Option.defaultValue CanopyConfiguration.Default.pageTimeout
                     }
             ) 
 
@@ -153,7 +159,7 @@ module AppConfiguration =
         browsers: BrowserConfiguration list 
 
         // list of canopy configuration options
-        canopyConfig: string list
+        canopyConfig: CanopyConfiguration
 
         /// user defined results processing script, to take user defined actions on
         /// the results published to the _results.csv files for each transaction
@@ -178,7 +184,7 @@ module AppConfiguration =
             pollingInterval = 5
             logs = LoggingConfiguration.Default
             browsers = [ BrowserConfiguration.Default ]
-            canopyConfig = []
+            canopyConfig = CanopyConfiguration.Default
             resultsProcessingScript = None
             credentialsRequestScript = None
         }
@@ -209,7 +215,7 @@ module AppConfiguration =
                         get.Optional.Field "browsers" (Decode.list BrowserConfiguration.Decoder)
                         |> Option.defaultValue AppConfiguration.Default.browsers
                     canopyConfig =
-                        get.Optional.Field "canopyConfig" (Decode.list Decode.string)
+                        get.Optional.Field "canopyConfig" (CanopyConfiguration.Decoder)
                         |> Option.defaultValue AppConfiguration.Default.canopyConfig
                     resultsProcessingScript = 
                         get.Optional.Field "resultsProcessingScript" (ResultsProcessingScriptConfiguration.Decoder)
