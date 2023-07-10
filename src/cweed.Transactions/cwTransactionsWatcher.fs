@@ -91,12 +91,12 @@ module cwTransactionWatcher =
         
 
 
-    let createForDirs (watcherType: WatcherType) (dirArr: string array) =
+    let createForDirs (watcherType: WatcherType) (dirArr: string array) (whiteLabel: string) =
         let mutable watcherArr: FileSystemWatcher array = [||]
         match watcherType with
         | Source ->
             for dir: string in dirArr do
-                watcherArr <- Array.append [|create "*.cwt" add remove update dir|] watcherArr
+                watcherArr <- Array.append [|create $"*.%s{whiteLabel}" add remove update dir|] watcherArr
                 watcherArr <- Array.append [|create "*.fsx" add remove update dir|] watcherArr
                 ()
         | Staging ->
@@ -109,13 +109,13 @@ module cwTransactionWatcher =
 
     // TODO: Need to enhance this method to check if secure mode is enabled.  If so
     //       it needs to also check the .authorized directory.
-    let registerExistingScripts (confDirs: string array) =
+    let registerExistingScripts (confDirs: string array) (whiteLabel: string) =
         let this: Reflection.MethodBase = MethodBase.GetCurrentMethod()
         let mutable scriptPaths: string array = [||]
         for dir: string in confDirs do
             
             let dirInfo: DirectoryInfo = DirectoryInfo(dir)
-            let cwtScripts: FileInfo array = dirInfo.GetFiles("*.cwt", SearchOption.AllDirectories)
+            let cwtScripts: FileInfo array = dirInfo.GetFiles($"*.%s{whiteLabel}", SearchOption.AllDirectories)
             let fsxScripts: FileInfo array = dirInfo.GetFiles("*.fsx", SearchOption.AllDirectories)
             
             scriptPaths <- Array.append (cwtScripts |> Array.map(fun (fi: FileInfo) -> fi.FullName)) scriptPaths

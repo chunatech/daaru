@@ -29,12 +29,12 @@ let main args =
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"program initialzied with settings: {appConfig}"
 
     // register existing scripts 
-    let existingScripts: string array = cwTransactionWatcher.registerExistingScripts (appConfig.scriptDirs |> List.toArray)
+    let existingScripts: string array = cwTransactionWatcher.registerExistingScripts (appConfig.scriptDirs |> List.toArray) appConfig.testWhiteLabel
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"transactions registered %s{existingScripts.ToString()}"
 
     // set up transaction watchers
-    let srcWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Source) (appConfig.scriptDirs |> List.toArray)    
-    let stagingWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Staging) ([| stagingDir |])
+    let srcWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Source) (appConfig.scriptDirs |> List.toArray) appConfig.testWhiteLabel  
+    let stagingWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Staging) ([| stagingDir |]) ""
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"watchers created for source and staging directories"
 
     // init TransactionRunner

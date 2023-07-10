@@ -130,6 +130,11 @@ module AppConfiguration =
     /// "parent" configuration also holds the settings
     /// for the logs and browsers configured
     type AppConfiguration = { 
+        /// white label value for test.  determines name of test
+        /// function in files as well as the file extension of
+        /// those files, must use valid file extension characters
+        testWhiteLabel: string
+
         /// list of directories that hold scripts to be run 
         scriptDirs: string list
 
@@ -176,6 +181,7 @@ module AppConfiguration =
         /// will be used in the event of cweed being unable to locate the users configs
 
         static member Default = { 
+            testWhiteLabel = "cwt"
             scriptDirs = [ (Path.Join(System.AppContext.BaseDirectory, "scripts")) ]
             screenshotDirPath =  (Path.Join(System.AppContext.BaseDirectory, "screenshots")) 
             resultsDirPath = (Path.Join(System.AppContext.BaseDirectory, "results"))
@@ -193,6 +199,9 @@ module AppConfiguration =
         static member Decoder: Decoder<AppConfiguration> =
             Decode.object (fun get ->
                 { 
+                    testWhiteLabel =
+                        get.Optional.Field "testWhiteLabel" (Decode.string)
+                        |> Option.defaultValue AppConfiguration.Default.testWhiteLabel
                     scriptDirs =
                         get.Optional.Field "scriptDirectories" (Decode.list Decode.string)
                         |> Option.defaultValue AppConfiguration.Default.scriptDirs

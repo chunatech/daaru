@@ -59,7 +59,7 @@ let successMessageScrape (selector: string) =
 let failureMessageScrape (selector: string) =
     failureMessageSelector <- selector
 
-let cwt (name: string) (maxDurationMs: int64) (testFn: (unit -> unit)) = // TODO: Needs to be templated with whitelabel setting
+let __WHITE_LABEL__ (name: string) (maxDurationMs: int64) (testFn: (unit -> unit)) = // TODO: Needs to be templated with whitelabel setting
     testDurationThresholds <- testDurationThresholds @ [maxDurationMs]
     testNames <- testNames @ [name]
     test testFn

@@ -92,6 +92,10 @@ module TransactionBuilder =
             | "__DEPENDENCIES__" ->
                 _buildFromTemplate tConfig lines result @ (_defaultImports |> Array.toList)
 
+            | (line: string) when line.Contains("__WHITE_LABEL__") ->
+                let line': string = line.Replace("__WHITE_LABEL__", _config.testWhiteLabel)
+                _buildFromTemplate tConfig lines result @ [line']
+
             | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__") -> 
                 match _config.credentialsRequestScript with 
                 | Some (cfg: CredentialsRequestScriptConfiguration) -> 
@@ -279,5 +283,6 @@ module TransactionBuilder =
         // run the processing fn based on ext type
         match Path.GetExtension(tConfig.scriptPath) with 
         | ".fsx" -> _processFsx tConfig 
-        | ".cwt" -> _processCwtFromTemplate tConfig
+        | (ext: string) when ext.EndsWith(_config.testWhiteLabel) ->
+            _processCwtFromTemplate tConfig
         | _ -> None
