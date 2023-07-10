@@ -84,65 +84,69 @@ module TransactionBuilder =
         ])
 
     let rec private _buildFromTemplate (tConfig: TransactionConfiguration) (template: string list) (result: string list) = 
-                    match template with 
-                    | [] -> result
-                    | line::lines -> 
-                        match line with 
-                        // add the #r statements here
-                        | "__DEPENDENCIES__" ->
-                            _buildFromTemplate tConfig lines result @ (_defaultImports |> Array.toList)
+        match template with 
+        | [] -> result
+        | line::lines -> 
+            match line with 
+            // add the #r statements here
+            | "__DEPENDENCIES__" ->
+                _buildFromTemplate tConfig lines result @ (_defaultImports |> Array.toList)
 
-                        | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__") -> 
-                            match _config.credentialsRequestScript with 
-                            | Some (cfg: CredentialsRequestScriptConfiguration) -> 
-                                let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", cfg.credRunnerPath)
-                                _buildFromTemplate tConfig lines result @ ([line'])
-                            | None -> 
-                                let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", "")
-                                _buildFromTemplate tConfig lines result @ ([line'])
+            | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__") -> 
+                match _config.credentialsRequestScript with 
+                | Some (cfg: CredentialsRequestScriptConfiguration) -> 
+                    let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", cfg.credRunnerPath)
+                    _buildFromTemplate tConfig lines result @ ([line'])
+                | None -> 
+                    let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT_RUNNER__", "")
+                    _buildFromTemplate tConfig lines result @ ([line'])
 
-                        | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT__") ->
-                            match _config.credentialsRequestScript with 
-                            | Some (cfg: CredentialsRequestScriptConfiguration) -> 
-                                let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", cfg.credScriptPath)
-                                _buildFromTemplate tConfig lines result @ ([line'])
-                            | None -> 
-                                let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", "")
-                                _buildFromTemplate tConfig lines result @ [line']                                
-                        
-                        | (line: string) when line.Contains("__SCREENSHOT_DIR__") -> 
+            | (line: string) when line.Contains("__CREDENTIAL_REQUEST_SCRIPT__") ->
+                match _config.credentialsRequestScript with 
+                | Some (cfg: CredentialsRequestScriptConfiguration) -> 
+                    let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", cfg.credScriptPath)
+                    _buildFromTemplate tConfig lines result @ ([line'])
+                | None -> 
+                    let line': string = line.Replace("__CREDENTIAL_REQUEST_SCRIPT__", "")
+                    _buildFromTemplate tConfig lines result @ [line']                                
+            
+            | (line: string) when line.Contains("__SCREENSHOT_DIR__") -> 
 
-                            let screenshotPath: string = _config.screenshotDirPath
-                            let line': string = line.Replace("__SCREENSHOT_DIR__", tConfig.screenshotPath)
-                            _buildFromTemplate tConfig lines result @ ([line'])
-
-
-                        | (line: string) when line.Contains("__CHROME_DRIVER_DIR__") -> 
-                            let line': string = line.Replace("__CHROME_DRIVER_DIR__", tConfig.browserDriverDir)
-                            _buildFromTemplate tConfig lines result @ ([line'])
+                let screenshotPath: string = _config.screenshotDirPath
+                let line': string = line.Replace("__SCREENSHOT_DIR__", tConfig.screenshotPath)
+                _buildFromTemplate tConfig lines result @ ([line'])
 
 
-                        | (line: string) when line.Contains("__BROWSER_OPTIONS__") -> 
-                            let mutable opts: string list = []
-                            for opt: string in (tConfig.browserOptions) do 
-                                opts <- $"browserOptions.AddArgument(\"--%s{opt}\")"::opts
-
-                            _buildFromTemplate tConfig lines result @ opts
-                        
-                        // TODO: add functionality for this configuration. talk to chase
-                        | (line: string) when line.Contains("__TRANSACTION_CONFIG__") -> 
-                            _buildFromTemplate tConfig lines result
+            | (line: string) when line.Contains("__CHROME_DRIVER_DIR__") -> 
+                let line': string = line.Replace("__CHROME_DRIVER_DIR__", tConfig.browserDriverDir)
+                _buildFromTemplate tConfig lines result @ ([line'])
 
 
-                        | (line: string) when line.Contains("__TRANSACTION_TESTS__") -> 
-                            let cwt: string list = File.ReadAllLines(tConfig.scriptPath) |> Array.toList
-                            _buildFromTemplate tConfig lines result @ cwt
+            | (line: string) when line.Contains("__BROWSER_OPTIONS__") -> 
+                let mutable opts: string list = []
+                for opt: string in (tConfig.browserOptions) do 
+                    opts <- $"browserOptions.AddArgument(\"%s{opt}\")"::opts
 
-                        // TODO: 
-                        // ADD TRANSACTION CONFIG 
+                _buildFromTemplate tConfig lines result @ opts
+            
+            // TODO: add functionality for this configuration. talk to chase
+            | (line: string) when line.Contains("__TRANSACTION_CONFIG__") -> 
+                let mutable opts: string list = []
+                for opt: string in (tConfig.canopyConfig) do 
+                    opts <- $"canopy.configuration.%s{opt}"::opts
 
-                        // an oridinary line 
-                        | _ -> _buildFromTemplate tConfig lines result @ [line]
+                _buildFromTemplate tConfig lines result @ opts
+
+            | (line: string) when line.Contains("__TRANSACTION_TESTS__") -> 
+                let cwt: string list = File.ReadAllLines(tConfig.scriptPath) |> Array.toList
+                _buildFromTemplate tConfig lines result @ cwt
+
+            // TODO: 
+            // ADD TRANSACTION CONFIG 
+
+            // an oridinary line 
+            | _ -> _buildFromTemplate tConfig lines result @ [line]
+
 
     let private _processCwtFromTemplate (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
         let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
@@ -161,16 +165,26 @@ module TransactionBuilder =
             Directory.CreateDirectory (Path.GetDirectoryName(fp)) 
             |> ignore
 
+        // TODO: Figure out what to do about multiple browser configs
+        let browserConfig: BrowserConfiguration = _config.browsers[0]
+
+        let canopyConfig: string list = _config.canopyConfig
+
         let outTConfig: TransactionConfiguration = {
             tConfig with 
                 stagedScriptPath = stagingFilePath
                 logPath = logPath
                 resultsPath = resultsPath
                 screenshotPath = screenshotPath
+                browser = browserConfig.browser
+                browserOptions = (browserConfig.browserOpts |> List.toArray)
+                browserDriverDir = browserConfig.driverLocation
+                canopyConfig = (canopyConfig |> List.toArray)
         }
 
-        // first read in template. currenltly only supporting default template. if this can't be read in then exit the program we 
-        // wont be able to construct any scripts.
+        // first read in template. currenltly only supporting default template.
+        // if this can't be read in then exit the program we wont be able to 
+        // construct any scripts.
         let templateContents: string array = 
             try File.ReadAllLines(Path.Join(templatesDir, "default.template")) 
             with (exn: exn) -> 
@@ -240,9 +254,9 @@ module TransactionBuilder =
             screenshotPath = ""
             pollingInterval = _config.pollingInterval
             browser = browserConfigs[0].browser
-            browserOptions = browserConfigs[0].browserOpts 
-                |> List.toArray
+            browserOptions = browserConfigs[0].browserOpts |> List.toArray
             browserDriverDir = browserConfigs[0].driverLocation
+            canopyConfig = [||]
             nugetPackages = [||]
         }
 

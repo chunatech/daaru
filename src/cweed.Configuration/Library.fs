@@ -132,6 +132,9 @@ module AppConfiguration =
         /// driver locations 
         browsers: BrowserConfiguration list 
 
+        // list of canopy configuration options
+        canopyConfig: string list
+
         /// user defined results processing script, to take user defined actions on
         /// the results published to the _results.csv files for each transaction
         resultsProcessingScript: ResultsProcessingScriptConfiguration option
@@ -154,7 +157,8 @@ module AppConfiguration =
             maxScreenshots = 3
             pollingInterval = 5
             logs = LoggingConfiguration.Default
-            browsers = [ BrowserConfiguration.Default ] 
+            browsers = [ BrowserConfiguration.Default ]
+            canopyConfig = []
             resultsProcessingScript = None
             credentialsRequestScript = None
         }
@@ -183,7 +187,10 @@ module AppConfiguration =
                         |> Option.defaultValue AppConfiguration.Default.logs
                     browsers =
                         get.Optional.Field "browsers" (Decode.list BrowserConfiguration.Decoder)
-                        |> Option.defaultValue AppConfiguration.Default.browsers 
+                        |> Option.defaultValue AppConfiguration.Default.browsers
+                    canopyConfig =
+                        get.Optional.Field "canopyConfig" (Decode.list Decode.string)
+                        |> Option.defaultValue AppConfiguration.Default.canopyConfig
                     resultsProcessingScript = 
                         get.Optional.Field "resultsProcessingScript" (ResultsProcessingScriptConfiguration.Decoder)
                     credentialsRequestScript = 

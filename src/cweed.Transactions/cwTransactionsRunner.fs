@@ -195,6 +195,8 @@ module cwTransactionRunner =
                             log Severity.Debug $"driver version detected. %s{lt.LastRunDetails.BrowserDriverVersion}"
                         
                         log Severity.Debug $"running cwTransactionRegsiter.update hook for %s{lt.Configuration.scriptPath}"
+                        lt.LastRunDetails.UnhandledOutput <- 0
+                        lt.LastRunDetails.UnhandledErrors <- 0
                         cwTransactionRegister.update lt
 
                     // STARTED:

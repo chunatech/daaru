@@ -20,6 +20,7 @@ module cwTransactions =
         browser: string
         browserOptions: string array
         browserDriverDir: string
+        canopyConfig: string array
         nugetPackages: string array 
     }
 
@@ -33,6 +34,7 @@ module cwTransactions =
         browser: string
         browserOptions: string array
         browserDriverDir: string
+        canopyConfig: string array
         nugetPackages: string array 
     }
 

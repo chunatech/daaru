@@ -146,8 +146,7 @@ before (fun _ ->
         testCounter <- testCounter + 1
     
     appendedMessages <- []
-    transactionTimer.Reset()
-    transactionTimer.Start()
+    transactionTimer.Restart()
 )
 
 onPass (fun _ ->
