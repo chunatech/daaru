@@ -25,13 +25,13 @@ module AppConfiguration =
             Decode.object (fun (get: Decode.IGetters) ->
                 { 
                     LogDirectory =
-                        get.Optional.Field "LogDirectory" Decode.string
+                        get.Optional.Field "logDirectory" Decode.string
                         |> Option.defaultValue LoggingConfiguration.Default.LogDirectory
                     FileSizeLimit =
-                        get.Optional.Field "FileSizeLimit" Decode.int
+                        get.Optional.Field "fileSizeLimit" Decode.int
                         |> Option.defaultValue LoggingConfiguration.Default.FileSizeLimit
                     Severity =
-                        get.Optional.Field "Severity" Decode.int
+                        get.Optional.Field "severity" Decode.int
                         |> Option.defaultValue LoggingConfiguration.Default.Severity 
                 }
             )
@@ -98,6 +98,26 @@ module AppConfiguration =
                 }
             )
     
+
+    type CanopyConfiguration = {
+        elementTimeout: float; 
+        compareTimeout: float; 
+        pageTimeout: float;
+    }
+    with 
+        static member Decoder: Decoder<CanopyConfiguration> = 
+            Decode.object (
+                fun get -> 
+                    {
+                        elementTimeout = get.Optional.Field "elementTimeout" Decode.float
+                        |> Option.defaultValue 10.0 
+                        compareTimeout = get.Optional.Field "compareTimeout" Decode.float
+                        |> Option.defaultValue 10.0
+                        pageTimeout = get.Optional.Field "pageTimeout" Decode.float
+                        |> Option.defaultValue 10.0
+                    }
+            ) 
+
 
     /// this is the overall application configuration. Any
     /// settings for cweed itself are listed here. this
