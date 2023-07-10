@@ -61,13 +61,7 @@ Move the entire `cweed` directory from this location to wherever you intend to i
 
 ## App Configuration 
 
-Application configuraiton is handled via a file named `config.json`. if this file is not located, defaults are used for all of the settings so while it is not required for testing purposes, it is recommended in the case of production use.
-
-### Location 
-
-The default location cweed looks for this file is in the `config` folder located in the directory where the `cweed` executable is located.
-
-Future releases may use argument passing for custom configurations, but this is not yet developed. 
+cweed can be configured via a `config.json` file, which will need to be located in `{your_install_location}/cweed/config`.
 
 ### Configuration Settings File
 
@@ -78,41 +72,53 @@ this is an example `config.json`
 	"scriptDirectories": ["something"],
 	"maxThreadCount": 5,
 	"pollingInterval": 1,
-	"screenshotDirectory": "/path/to/screenshots/dir"
+	"screenshotDirectory": "/path/to/screenshots/dir",
 	"browsers": [{
 		"browser": "chrome",
-		"browserOpts": ["someOpt"],
+		"browserOpts": ["--someOpt"],
 		"driverLocation": ""
 	}],
 	"logs": {
-		"location": "",
-		"rollSize": 10,
-		"format": "unformatted",
-		"verbosity": 0
+		"logDirectory": "/path/to/custom/log/directory",
+		"fileSizeLimit" 10,
+		"severity": 1
 	},
 	"credentialsRequestScript": {
 		"credScriptPath": "/path/to/the/script.ext",
 		"credRunnerPath": "/path/to/the/script/runner" 
+	},
+	"canopyConfig": {
+		"elementTimeout" = 5.0,
+		"compareTimeout" = 5.0,
+		"pageTimeout" = 5.0
 	}
 }
 ```
 
+All of these options are not required and canopy can run purely on defaults if a `config.json` is not provided or fails
+to parse. If you're using canopy in production, however it's likely you will need to use at least some of these options.
+
+<br />
+
+**App Configuration Options**
+
 option | requirement | description 
 |--|--|--|
-scriptDirectories | optional | An array directories which hold transactions to be run (`.cwt` files). The user can configure multiple directories to be watched by cweed. If the user adds transactions to any of these directories cweed will monitor for changes and run those transactions according to their polling settings. Defaults to the `scripts` folder located in the cweed executable directory
-screenshotDirectory | optional | set a directory for screenshots on test failure, or otherwise from transactions to go to
+scriptDirectories | optional | An array directories which hold transactions to be run (`.cwt` files). multiple directories can be configured to be watched by cweed. default directory is `cweed/scripts`.
+screenshotDirectory | optional | set a directory for screenshots on test failure. Default is set to `cweed/screenshots`
 maxThreadCount | optional | Handles how many threads will be used specifically for processing transactions. This does not count the actual cweed process. Defaults to `4` if not configured.
 pollingInterval | optional | This setting governs how frequently transactions will be run in minutes. Defaults to `5` 
-browsers | optional | This is an array representing the configurations for each browser the user intends to use with cweed. At this time only chrome is supported. see [Browser Configuration Options](#browser-configuration-options) for more details. The default value for this option is currently a default setup of chrome with the driver location being in the `drivers` folder of the cweed executable directory
-logs | optional | This is the settings for the logger, such as location of the logs directory, format of the log entries, verbosity logged and size before rolling the log file. 
-credentialsRequestScript | optional | location of a user generated credentials script path, as well as the location of the runner for that script
+browsers | optional | a list of browser configurations. At this time only chrome is supported. See [browser configuration options](#browser-configuration-options) for more details.
+logs | optional | settings for the logger. see [logger configuration options](#logger-configuration-options) for details
+canopyConfig | optional | additional canopy specific settings to be used by transaction files. see [canopy configuration options](#canopy-configuration-options) for details on which options are currently supported by cweed
+credentialsRequestScript | optional | configuration option for the user to ba able to obtain necessary credentials for transactions utilizing a user generated script. see [credentials request script options]() for more details.   
 
 ## Browser Configuration Options
 
 ```json
 {
     "browser": "chrome",
-    "browserOpts": ["someOpt"],
+    "browserOpts": ["--someOpt"],
     "driverLocation": "/path/to/driver/directory"
 }
 ```
