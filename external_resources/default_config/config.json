@@ -1,3 +1,18 @@
 {
-    "pollingInterval": 1
+    "testWhiteLabel": "cwt",
+    "pollingInterval": 1,
+    "browsers": [
+        {
+            "browser": "chrome",
+            "browserOpts": [
+                "--incognito",
+                "--headless=new"
+            ]
+        }
+    ],
+    "canopyConfig": {
+        "elementTimeout": 5.0,
+        "compareTimeout": 5.0,
+        "pageTimeout": 5.0
+    }
 }
