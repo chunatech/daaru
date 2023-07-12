@@ -4,7 +4,7 @@
 
 ## Description
 
-cWeed is a browser automation and testing tool, with a focus on ease of use and extensibility. 
+cWeed is a browser automation and testing tool, with a focus on ease of use and extensibility. It functions as a wrapper around canopy that includes file watching, results publishing and logging. 
 
 cWeed is built using:
 - [Dotnet](https://dotnet.microsoft.com/en-us/download/dotnet)
@@ -15,6 +15,11 @@ cWeed is built using:
 
  ## Getting Started 
 
+ ### Requirements 
+
+ - chrome driver that is compatible with the version of chrome being used 
+ - chrome browser 
+
  ### Installation
 
 <!-- TODO: Link to latest release here -->
@@ -22,9 +27,11 @@ cWeed is built using:
 2. Extract the release into the directory where you would like cweed to be 
 installed
 <!-- TODO: Link to Configuration page -->
-3. Configure cWeed if desired by adding a `config.json` file to the `config`
+3. Obtain a chrome driver that is compatible with the version of chrome being used and 
+either extract it into the `drivers` directory of the application, or upon configuration, 
+specify its location in the config file.
+4. Configure cWeed if desired by adding a `config.json` file to the `config`
 directory in your installation. see [configuration]() for more details
-
 *alternately, you can build cWeed from source, by using either the `build.ps1` or 
 `build.sh` files in the root of the project. Obtain the source code from [releases](),
 or build from the master branch if desired.*
