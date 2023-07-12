@@ -36,7 +36,22 @@ directory in your installation. see [configuration]() for more details
 `build.sh` files in the root of the project. Obtain the source code from [releases](),
 or build from the master branch if desired.*
 
-## License 
+## Attributions 
+
+For the dlls that are distributed with cWeed, copies of their licenses are included 
+in the same directory as the dll. Links to these licenses are also included 
+below, as well as Thoth json, since we used the Thoth.Json.Net library in our project 
+for decoding/encoding.  
+
+* [canopy](https://github.com/lefthandedgoat/canopy/blob/master/LICENSE.md)
+* [Newtonsoft Json](https://github.com/JamesNK/Newtonsoft.Json/blob/master/LICENSE.md) 
+* [Selenium Web Driver](https://github.com/SeleniumHQ/selenium/blob/trunk/LICENSE)
+* [Thoth Json](https://github.com/thoth-org/Thoth.Json.Net/blob/main/LICENSE.md)
+* [Chromedriver]()
+
+## cWeed's License
+
+MIT License
 
 Copyright (c) 2023 Chase Colvin, Tina Colvin
 
