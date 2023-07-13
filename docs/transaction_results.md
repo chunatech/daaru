@@ -97,4 +97,23 @@ run.
 
 The value of totalDurationThreshold for the previous run of the transaction.
 
+## Results Processing 
+
+cWeed can be configured to process the results at the end of a transaction via 
+use of a results processing script of your choice. an simple example is included
+with the application that just does a word count of the result. 
+
+In order to use this functionality, set the `resultsProcessingScript` option in 
+`config.json` to specify the runner and path of the results processing script.
+The output and error streams are logged to the generated logfile for the
+transaction.
+
+*configuration example*
+```json
+// include in config.json
+"resultsProcessingScript": {
+    "resultsScriptPath": "path/to/script",
+    "resultsRunnerPath": "path/to/runner"
+}
+```
 

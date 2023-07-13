@@ -1,18 +1,17 @@
 
 # Installation and Building from Source
 
-## Installation 
+## Releases 
 
-<!-- TODO: set up release hyperlink -->
-Installing `cweed` can be done in two ways, either by obtaining a built [release]() and extracting the release to the 
-desired installation location on your system, or by building the applicaiton from source.
+Current release is [`beta 0.5.0`]()
 
-### Building From Source
-
-<br />
+## Building From Source
 
 **Requirements**
+
 - Dotnet 6 >= 6.0.406
+
+### Build Scripts 
 
 It is recommended to use the build scripts provided with the source code to build this application, or to review them 
 before manually attempting to build this app as the build flags and directory set up for the application is included in 
@@ -25,11 +24,13 @@ correct flags and directory structure.
 
 **Linux**
 
-*(provided you have powershell installed at `/usr/bin/pwsh`)*: 
+if pwsh is installed at `/usr/bin/pwsh`
+
 ```shell
 ./build.ps1
 ```
-otherwise  
+otherwise you can call the script with pwsh
+
 ```shell
 pwsh build.ps1
 ```
@@ -55,4 +56,13 @@ Move the entire `cweed` directory from this location to wherever you intend to i
 
 <br />
 
+## Installation 
 
+<!-- TODO: set up release hyperlink -->
+1. Either obtain a [release](), or build cWeed. 
+2. Place the `cweed` directory in the installation location of your choice 
+3. Obtain a chromedriver for your version of chrome 
+4. place the chromedriver in the `drivers` folder of your cweed installation. 
+Alternatively cWeed can be configured to look elsewhere for the driver via a 
+`config.json` file. See [configuring cWeed]()
+5. Configure the application according to your needs via `config.json`
