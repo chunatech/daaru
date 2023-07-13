@@ -1,26 +1,28 @@
 ﻿namespace cweed
 
-
+/// Manages configuration types, as well as layering and decoding the application configuration
 module AppConfiguration =
     open System
     open System.IO
     open Thoth.Json.Net
 
 
-    /// this is the logging configuration settings and 
-    /// are nested within the AppConfiguration record 
+    ///<summary>Configurations for cwLogger</summary>
+    /// <typeparam name="LogDirectory">the directory logs should be kept in</typeparam>
+    /// <typeparam name="FileSizeLimit">the file size limit before file rolling occurs</typeparam>
+    /// <typeparam name="Severity">an integar describing the severity to include. Ranges from `0` for debug to `4` for critical, inclusive.</typeparam>
     type LoggingConfiguration = { 
         LogDirectory: string
         FileSizeLimit: int
         Severity: int 
     } with
-
+        /// a default implementation to use in the case of fields not being configured by the user
         static member Default = { 
             LogDirectory = (Path.Join(AppContext.BaseDirectory, "logs"))
             FileSizeLimit = 10
             Severity = 1 
         }
-
+        /// json decoder for the logging configuration type
         static member Decoder: Decoder<LoggingConfiguration> =
             Decode.object (fun (get: Decode.IGetters) ->
                 { 
