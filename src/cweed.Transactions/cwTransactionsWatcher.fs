@@ -15,7 +15,12 @@ module cwTransactionWatcher =
         | Staging
 
 
-
+    ///<summary>create a transaction watcher</summary>
+    /// <param name="filter">a string filter that tells the watcher what files to watch</param>
+    /// <param name="addCb">a callback for adding a file to the watcher. the fn takes in a `string` filepath and returns `unit`</param>
+    /// <param name="removeCb">a callback for removing a file from being watched. the fn takes in a string filepath and returns unit</param>
+    /// <param name="updateCb">a callback for updates to a watched file</param>
+    /// <param name="dir">the directory that the watcher will look in</param>
     let create (filter: string) addCb removeCb updateCb (dir: string) =
         Directory.CreateDirectory dir |> ignore
         let watcher: FileSystemWatcher = new FileSystemWatcher()
@@ -32,6 +37,11 @@ module cwTransactionWatcher =
         watcher
 
 
+    /// <summary>
+    /// handler to remove a transaction from the transaction register. used as a callback 
+    /// for the transaction watcher.
+    /// </summary> 
+    /// <param name="path">the path to the transaction to remove</param>
     let remove (path: string) =
         let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
         let mutable msg: string = ""
@@ -44,7 +54,11 @@ module cwTransactionWatcher =
             msg <- "no transaction to remove at " + path
 
 
-
+    /// <summary>
+    /// handler for adding a transaction to the transaction register. used as the addCb for 
+    /// the transaction watcher.
+    /// </summary> 
+    /// <param name="path">the path to the transaction to add</param>
     let add (path: string) =
         let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
         let mutable msg: string = ""
@@ -57,7 +71,11 @@ module cwTransactionWatcher =
             msg <- $"unable to add %s{path}"
             ()
 
-
+    /// <summary>
+    /// handler for re-registering a transaction when a change to that transaction has 
+    /// been made. used as the updateCB fn for the transaction watcher. 
+    /// </summary> 
+    /// <param name="path">the path to the transaction to update</param>
     let update (path: string) =
         // TODO:  Make this method check hash of staged file against source file
         //        Do nothing if they are the same
@@ -82,7 +100,7 @@ module cwTransactionWatcher =
         | None ->
             ()
 
-
+    //TODO: set up fsx validation 
     let validateFsx (path: string) =
         // TODO: Build out logic to have staged .fsx files validated
         let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
@@ -90,7 +108,14 @@ module cwTransactionWatcher =
         ()
         
 
-
+    ///<summary>
+    /// create watchers for an array of directories. used in the main program to set up all of 
+    /// the script and staging directories before the main loop. 
+    /// </summary>
+    /// <param name="watcherType">the type of watcher being created. options are source and staging at this time</param>
+    /// <param name="dirArr">the array of directories to set up watchers for</param>
+    /// <param name="whiteLabel">the extension and calling method name for the transactions as defined by the user via configuration</param>
+    /// <returns>an array of transaction watchers configured for the watcher type specified</returns>
     let createForDirs (watcherType: WatcherType) (dirArr: string array) (whiteLabel: string) =
         let mutable watcherArr: FileSystemWatcher array = [||]
         match watcherType with
@@ -107,8 +132,9 @@ module cwTransactionWatcher =
         watcherArr
 
 
-    // TODO: Need to enhance this method to check if secure mode is enabled.  If so
-    //       it needs to also check the .authorized directory.
+    /// <summary>register the scripts that already exist in the scripts locations specified by the user</summary>
+    /// <param name="confDirs">array of directories configured to hold scripts</param>
+    /// <param name="whiteLabel">the white label setting provided via configuration</param>
     let registerExistingScripts (confDirs: string array) (whiteLabel: string) =
         let this: Reflection.MethodBase = MethodBase.GetCurrentMethod()
         let mutable scriptPaths: string array = [||]
