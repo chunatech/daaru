@@ -17,8 +17,8 @@ cWeed is built using:
 
  ### Requirements 
 
- - chrome driver that is compatible with the version of chrome being used 
- - chrome browser 
+ - [chrome driver](https://chromedriver.storage.googleapis.com/index.html) that is compatible with the version of chrome being used 
+ - [chrome browser](https://www.google.com/chrome/)
 
  ### Installation
 
@@ -47,7 +47,10 @@ for decoding/encoding.
 * [Newtonsoft Json](https://github.com/JamesNK/Newtonsoft.Json/blob/master/LICENSE.md) 
 * [Selenium Web Driver](https://github.com/SeleniumHQ/selenium/blob/trunk/LICENSE)
 * [Thoth Json](https://github.com/thoth-org/Thoth.Json.Net/blob/main/LICENSE.md)
-* [Chromedriver]()
+<!-- * [Chromedriver](https://chromedriver.storage.googleapis.com/index.html) *in the 
+case of chromedriver, with each version you can download a license file is included.
+currently, one is included for each driver currently distributed with this project, 
+though we may take chromedriver out and require manual installtion in the future.* -->
 
 ## cWeed's License
 
