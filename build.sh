@@ -1,7 +1,7 @@
 #!/bin/bash
 [ -z "${1}" ] && echo "You must specify a build target." && exit 1
 
-OUTDIR=./build/release/$1/cweed
+OUTDIR=./build/release/$1/daaru
 
 echo "Removing old build files at: ${OUTDIR}"
 
@@ -10,7 +10,7 @@ rm -rf $OUTDIR/fsi_standalone/
 rm -rf src/*/bin
 rm -rf src/*/obj
 
-dotnet publish ./src/cweed/cweed.fsproj -c Release -r $1 -o $OUTDIR --self-contained && \
+dotnet publish ./src/daaru/daaru.fsproj -c Release -r $1 -o $OUTDIR --self-contained && \
 dotnet publish ./src/fsi_standalone/fsi_standalone.fsproj -c Release -r $1 -o $OUTDIR/fsi_standalone --self-contained && \
 
 for d in config logs results scripts staging drivers libs screenshots templates; do

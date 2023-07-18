@@ -6,7 +6,7 @@ param(
     [switch]$CleanBuild
 )
 
-$OUTDIR = Join-Path $PSScriptRoot "build/release/$BuildTarget/cweed"
+$OUTDIR = Join-Path $PSScriptRoot "build/release/$BuildTarget/daaru"
 
 Write-Output "Removing old build file at: $OUTDIR"
 
@@ -19,7 +19,7 @@ if ($CleanBuild) {
 }
 
 try {
-    & dotnet publish (Join-Path $PSScriptRoot 'src/cweed/cweed.fsproj') -c Release -r $BuildTarget -o $OUTDIR --self-contained
+    & dotnet publish (Join-Path $PSScriptRoot 'src/daaru/daaru.fsproj') -c Release -r $BuildTarget -o $OUTDIR --self-contained
     & dotnet publish (Join-Path $PSScriptRoot 'src/fsi_standalone/fsi_standalone.fsproj') -c Release -r $BuildTarget -o (Join-Path $OUTDIR 'fsi_standalone') --self-contained
 }
 catch {
