@@ -1,6 +1,6 @@
-useCase "cweed" "Test cweed multiple tests in a single transaction" 0
+useCase "daaru" "Test daaru multiple tests in a single transaction" 0
 
-cwt "testOne" 0 (fun _ -> 
+dt "testOne" 0 (fun _ -> 
     //this is an F# function body, it's whitespace enforced
 
     //go to url
@@ -12,7 +12,7 @@ cwt "testOne" 0 (fun _ ->
     "#welcome" == "Welcome"
 )
 
-cwt "testTwo" 0 (fun _ ->
+dt "testTwo" 0 (fun _ ->
     //assert that the element with an id of 'firstName' has the value 'John'
     "#firstName" == "John"
 
