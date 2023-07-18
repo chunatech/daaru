@@ -5,12 +5,12 @@ namespace dtTransactions
 module dtTransactionBuilder = 
     open System
     open System.IO
-    open cweed.AppConfiguration
+    open dtConfig.AppConfiguration
     open dtTransactions
 
     // instance of the app configuration being used. initialized with the 
     // default. init fn provides the user config at runtime
-    let mutable private _config: AppConfiguration = cweed.AppConfiguration.AppConfiguration.Default
+    let mutable private _config: AppConfiguration = dtConfig.AppConfiguration.AppConfiguration.Default
 
     /// internal staging directory. this is where cweed stages the built  
     /// scripts that are actually run by the transaction runner

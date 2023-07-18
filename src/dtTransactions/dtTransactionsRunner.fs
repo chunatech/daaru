@@ -10,10 +10,10 @@ module dtTransactionRunner =
     open System.Collections.Concurrent
     open System.Text.RegularExpressions
 
-    open cweed.dtUtils
+    open dtUtils
 
     open dtTransactions
-    open cweed.AppConfiguration
+    open dtConfig.AppConfiguration
     open dtLogger.Logger
     open System.Reflection
 

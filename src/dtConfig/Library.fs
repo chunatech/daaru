@@ -1,4 +1,4 @@
-﻿namespace cweed
+﻿namespace dtConfig
 
 /// Manages configuration types, as well as layering and decoding the application configuration
 module AppConfiguration =

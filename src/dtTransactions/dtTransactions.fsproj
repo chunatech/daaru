@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\cweed.Configuration\cweed.Configuration.fsproj" />
+    <ProjectReference Include="..\dtConfig\dtConfig.fsproj" />
     <ProjectReference Include="..\dtUtils\dtUtils.fsproj" />
     <ProjectReference Include="..\dtLogger\dtLogger.fsproj" />
   </ItemGroup>

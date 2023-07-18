@@ -1,4 +1,4 @@
-﻿open cweed.AppConfiguration
+﻿open dtConfig.AppConfiguration
 open dtTransactions
 // open dtTransactions.dtTransactions
 open dtTransactions.dtTransactionRunner

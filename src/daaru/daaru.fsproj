@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\cweed.Configuration\cweed.Configuration.fsproj" />
+    <ProjectReference Include="..\dtConfig\dtConfig.fsproj" />
     <ProjectReference Include="..\dtTransactions\dtTransactions.fsproj" />
     <ProjectReference Include="..\dtLogger\dtLogger.fsproj" />
   </ItemGroup>

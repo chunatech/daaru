@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{22E25745-A907-4D9E-81D7-8C27E07022A4}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed", "src\cweed\cweed.fsproj", "{FFFD3683-97D5-4240-A3E2-7FFEAD9E3722}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "daaru", "src\daaru\daaru.fsproj", "{FFFD3683-97D5-4240-A3E2-7FFEAD9E3722}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Configuration", "src\cweed.Configuration\cweed.Configuration.fsproj", "{BF5B7863-1FF6-4717-BF3C-0155982D64A7}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "dtConfig", "src\dtConfig\dtConfig.fsproj", "{BF5B7863-1FF6-4717-BF3C-0155982D64A7}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "dtUtils", "src\dtUtils\dtUtils.fsproj", "{04ACF0D4-707F-4A79-89F3-F384A9822C75}"
 EndProject
