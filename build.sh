@@ -5,7 +5,8 @@ OUTDIR=./build/release/$1/daaru
 
 echo "Removing old build files at: ${OUTDIR}"
 
-rm $OUTDIR/cw*
+rm $OUTDIR/daaru*
+rm $OUTDIR/dt*
 rm -rf $OUTDIR/fsi_standalone/
 rm -rf src/*/bin
 rm -rf src/*/obj
@@ -17,7 +18,7 @@ for d in config logs results scripts staging drivers libs screenshots templates;
     [ ! -d $OUTDIR/$d ] && mkdir $OUTDIR/$d && echo "Created dir ${OUTDIR}/${d}"
 done
 
-cp -prnv external_resources/default_drivers/$1/* $OUTDIR/drivers/
+# cp -prnv external_resources/default_drivers/$1/* $OUTDIR/drivers/
 cp -prnv external_resources/default_scripts/* $OUTDIR/scripts/
 cp -prnv external_resources/default_libs/* $OUTDIR/libs/
 cp -prnv external_resources/default_config/* $OUTDIR/config/

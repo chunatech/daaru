@@ -10,7 +10,8 @@ $OUTDIR = Join-Path $PSScriptRoot "build/release/$BuildTarget/daaru"
 
 Write-Output "Removing old build file at: $OUTDIR"
 
-Remove-Item (Join-Path $OUTDIR 'cw*') -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $OUTDIR 'daaru*') -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $OUTDIR 'dt*') -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $OUTDIR 'fsi_standalone') -Recurse -Force -ErrorAction SilentlyContinue
 
 if ($CleanBuild) {
@@ -36,8 +37,8 @@ foreach ($folder in $folders1+$folders2) {
 }
 
 foreach ($folder in $folders1) {
+    if ($folder -eq "drivers") { continue }
     $extResFolder = "external_resources/default_$($folder)"
-    if ($folder -eq "drivers") { $extResFolder = Join-Path $extResFolder $BuildTarget }
     $children = @(Get-ChildItem (Join-Path $PSScriptRoot $extResFolder))
     $outPathBase = Join-Path $OUTDIR $folder
 
