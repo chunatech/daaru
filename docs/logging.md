@@ -1,6 +1,6 @@
 # Logging 
 
-The cWeed logger is configurabe by the user (see [Configuring cWeed]()). It handles all of the applications logging, 
+The daaru logger is configurabe by the user (see [Configuring daaru]()). It handles all of the applications logging, 
 and also can be used to log information from transactions 
 
 ## Log Format 
@@ -26,7 +26,7 @@ message |  the acutal message, in between `'` characters
 
 ## Log Severity 
 
-cWeed has multiple levels of logging that can be configured ranging from `Debug` to `Critical`
+daaru has multiple levels of logging that can be configured ranging from `Debug` to `Critical`
 
 Severity | Int | Description
 |--|--|--|
@@ -39,14 +39,14 @@ CRITICAL | 4 | These are errors that come from reaching unreachable branches or 
 
 ## Logging in Transactions 
 
-cWeed allows for use of its logger in your transactions files via prepending logged items with a special string notation
+daaru allows for use of its logger in your transactions files via prepending logged items with a special string notation
 
 example string format showcasing an informational log 
 
 ```fsharp 
 printfn "[[LOG]][INFO] this would be the message that gets logged" 
 ```
-cWeed consumes the stdout and stderr streams for running transactions. The program will parse lines tagged like this 
+daaru consumes the stdout and stderr streams for running transactions. The program will parse lines tagged like this 
 into logs and place them into files named after the transaction which the log comes from. These files are also subject
 to log rolling and located in the configured logs directory. 
 

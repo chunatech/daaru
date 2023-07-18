@@ -1,6 +1,6 @@
 # Transaction Results Publishing 
 
-cWeed will publish the results of the transactions it runs as `.csv` files in 
+daaru will publish the results of the transactions it runs as `.csv` files in 
 either a configured location or the `results` directory of the application 
 folder by default. 
 
@@ -14,7 +14,7 @@ Results files are named after the transaction being run. The convention is:
 ## File rolling 
 
 Results files are rolled by default at `10MB`. If an alternate rolling size in 
-logging is set, cWeed will currently honor this size for results files as well.
+logging is set, daaru will currently honor this size for results files as well.
 
 ## Results `.csv` Fields 
 
@@ -22,7 +22,7 @@ Field | value | Description
 |--|--|--|
 timestamp| date | timestamp of the result entry 
 result | passed/failed | the outcome of the transaction 
-resultReason | string msg | this is a description of the reason given by cWeed for the result obtained 
+resultReason | string msg | this is a description of the reason given by daaru for the result obtained 
 targetUrl | url | the most recent url the transaction navigated to
 application | string | this is a data field that can be specified by the user to describe the application the transaction is for 
 useCaseDescription | string | a description of what the use case the transaction covers 
@@ -54,7 +54,7 @@ Describes the reason for the result.
 
 ### Target Url
 
-The last url cWeed navigated to before completing the transaction. 
+The last url daaru navigated to before completing the transaction. 
 
 ### Application 
 
@@ -99,7 +99,7 @@ The value of totalDurationThreshold for the previous run of the transaction.
 
 ## Results Processing 
 
-cWeed can be configured to process the results at the end of a transaction via 
+daaru can be configured to process the results at the end of a transaction via 
 use of a results processing script of your choice. an simple example is included
 with the application that just does a word count of the result. 
 

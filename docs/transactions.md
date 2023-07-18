@@ -6,14 +6,14 @@
 this is an example of a transaction file using the default `.dt` extension. 
 these are just the canopy tests without the boilerplate parts. 
 
-cweed composes these files with a template, watches them for changes, and runs 
+daaru composes these files with a template, watches them for changes, and runs 
 them in an automated way on a polling cycle. 
 
 > Canopy provides a flexible, easy to learn api for its UI automation. See the [canopy documentation](https://lefthandedgoat.github.io/canopy/) for more information on how 
 to write canopy tests. 
 
 ```fsharp 
-useCase "cweed" "Test cweed transactions" 0
+useCase "daaru" "Test daaru transactions" 0
 
 dt "testOne" 0 (fun _ -> 
     goto "http://lefthandedgoat.github.io/canopy/testpages/"

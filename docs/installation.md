@@ -51,18 +51,18 @@ pwsh build.ps1
 powershell build.ps1
 ```
 
-the finished build will be located in `/build/release/{your_os_tag}/cweed` complete with default directory structure.
-Move the entire `cweed` directory from this location to wherever you intend to install cweed.  
+the finished build will be located in `/build/release/{your_os_tag}/daaru` complete with default directory structure.
+Move the entire `daaru` directory from this location to wherever you intend to install daaru.  
 
 <br />
 
 ## Installation 
 
 <!-- TODO: set up release hyperlink -->
-1. Either obtain a [release](), or build cWeed. 
-2. Place the `cweed` directory in the installation location of your choice 
+1. Either obtain a [release](), or build daaru. 
+2. Place the `daaru` directory in the installation location of your choice 
 3. Obtain a chromedriver for your version of chrome 
-4. place the chromedriver in the `drivers` folder of your cweed installation. 
-Alternatively cWeed can be configured to look elsewhere for the driver via a 
-`config.json` file. See [configuring cWeed]()
+4. place the chromedriver in the `drivers` folder of your daaru installation. 
+Alternatively daaru can be configured to look elsewhere for the driver via a 
+`config.json` file. See [configuring daaru]()
 5. Configure the application according to your needs via `config.json`
