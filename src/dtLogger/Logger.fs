@@ -1,4 +1,4 @@
-namespace cwLogger
+namespace dtLogger
 
 module Logger = 
     open System

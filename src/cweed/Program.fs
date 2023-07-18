@@ -2,7 +2,7 @@
 open cwTransactions
 open cwTransactions.cwTransactions
 open cwTransactions.cwTransactionRunner
-open cwLogger.Logger
+open dtLogger.Logger
 
 open System
 open System.IO

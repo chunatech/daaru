@@ -14,7 +14,7 @@ module cwTransactionRunner =
 
     open cwTransactions
     open cweed.AppConfiguration
-    open cwLogger.Logger
+    open dtLogger.Logger
     open System.Reflection
 
     type TransactionRunner = {
