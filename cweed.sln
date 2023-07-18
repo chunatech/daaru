@@ -9,7 +9,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed", "src\cweed\cweed.fs
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Configuration", "src\cweed.Configuration\cweed.Configuration.fsproj", "{BF5B7863-1FF6-4717-BF3C-0155982D64A7}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Utils", "src\cweed.Utils\cweed.Utils.fsproj", "{04ACF0D4-707F-4A79-89F3-F384A9822C75}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "dtUtils", "src\dtUtils\dtUtils.fsproj", "{04ACF0D4-707F-4A79-89F3-F384A9822C75}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Transactions", "src\cweed.Transactions\cweed.Transactions.fsproj", "{214FEF3C-FF45-4006-B740-AC449DDAD64D}"
 EndProject

@@ -10,7 +10,7 @@ module cwTransactionRunner =
     open System.Collections.Concurrent
     open System.Text.RegularExpressions
 
-    open cweed.Utils
+    open cweed.dtUtils
 
     open cwTransactions
     open cweed.AppConfiguration

@@ -1,6 +1,6 @@
 ﻿namespace cweed
 
-module Utils = 
+module dtUtils = 
     open Thoth.Json.Net
     open System
     open System.IO
