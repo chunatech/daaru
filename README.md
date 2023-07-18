@@ -1,12 +1,10 @@
-# cWeed
-
-*a good source of selenium* 
+# Daaru
 
 ## Description
 
-cWeed is a browser automation and testing tool, with a focus on ease of use and extensibility. It functions as a wrapper around canopy that includes file watching, results publishing and logging. 
+Daaru is a browser automation and testing tool, with a focus on ease of use and extensibility. It functions as a wrapper around canopy that includes file watching, results publishing and logging. 
 
-cWeed is built using:
+Daaru is built using:
 - [Dotnet](https://dotnet.microsoft.com/en-us/download/dotnet)
 - [FSharp](https://fsharp.org/) 
 - [Canopy](https://github.com/lefthandedgoat/canopy)
@@ -24,21 +22,21 @@ cWeed is built using:
 
 <!-- TODO: Link to latest release here -->
 1. Obtain a [release]() for your operating system
-2. Extract the release into the directory where you would like cweed to be 
+2. Extract the release into the directory where you would like Daaru to be 
 installed
 <!-- TODO: Link to Configuration page -->
 3. Obtain a chrome driver that is compatible with the version of chrome being used and 
 either extract it into the `drivers` directory of the application, or upon configuration, 
 specify its location in the config file.
-4. Configure cWeed if desired by adding a `config.json` file to the `config`
+4. Configure Daaru if desired by adding a `config.json` file to the `config`
 directory in your installation. see [configuration]() for more details
-*alternately, you can build cWeed from source, by using either the `build.ps1` or 
+*alternately, you can build Daaru from source, by using either the `build.ps1` or 
 `build.sh` files in the root of the project. Obtain the source code from [releases](),
 or build from the master branch if desired.*
 
 ## Attributions 
 
-For the dlls that are distributed with cWeed, copies of their licenses are included 
+For the dlls that are distributed with Daaru, copies of their licenses are included 
 in the same directory as the dll. Links to these licenses are also included 
 below, as well as Thoth json, since we used the Thoth.Json.Net library in our project 
 for decoding/encoding.  
@@ -49,7 +47,7 @@ for decoding/encoding.
 * [Thoth Json](https://github.com/thoth-org/Thoth.Json.Net/blob/main/LICENSE.md)
 
 
-## cWeed's License
+## Daaru's License
 
 MIT License
 
