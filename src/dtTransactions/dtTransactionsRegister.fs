@@ -1,9 +1,9 @@
-namespace cwTransactions
+namespace dtTransactions
 
 /// holds a list of located transactions and handles the transaction registration 
 /// process 
-module cwTransactionRegister = 
-    open cwTransactions
+module dtTransactionRegister = 
+    open dtTransactions
 
     type private RegisteredTransaction =
         | Add of transaction: Transaction

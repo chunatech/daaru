@@ -1,7 +1,7 @@
 ﻿open cweed.AppConfiguration
-open cwTransactions
-open cwTransactions.cwTransactions
-open cwTransactions.cwTransactionRunner
+open dtTransactions
+// open dtTransactions.dtTransactions
+open dtTransactions.dtTransactionRunner
 open dtLogger.Logger
 
 open System
@@ -12,13 +12,13 @@ open System.Reflection
 let fsiSaLocation: string = (Path.Join(AppContext.BaseDirectory, "fsi_standalone/fsi_standalone"))
 
 /// the staging directory location. see cweed.Transactions/cwTransactionsBuilder.fs
-let stagingDir: string = TransactionBuilder.stagingDir
+let stagingDir: string = dtTransactionBuilder.stagingDir
 
 /// initialize the application configuration, logger and transaction builder.  
 let InitializeProgram () = 
     let mutable appConfig: AppConfiguration = ConfigFileHandler.readConfigFileOrDefault ()
     let logger: Logger = new Logger(appConfig.logs.FileSizeLimit, enum<Severity>(appConfig.logs.Severity))
-    TransactionBuilder.init (appConfig) 
+    dtTransactionBuilder.init (appConfig) 
     appConfig, logger
 
 
@@ -42,12 +42,12 @@ let main args =
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"program initialzied with settings: {appConfig}"
 
     // register existing scripts 
-    let existingScripts: string array = cwTransactionWatcher.registerExistingScripts (appConfig.scriptDirs |> List.toArray) appConfig.testWhiteLabel
+    let existingScripts: string array = dtTransactionWatcher.registerExistingScripts (appConfig.scriptDirs |> List.toArray) appConfig.testWhiteLabel
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"transactions registered %s{existingScripts.ToString()}"
 
     // set up transaction watchers
-    let srcWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Source) (appConfig.scriptDirs |> List.toArray) appConfig.testWhiteLabel  
-    let stagingWatcherList: FileSystemWatcher array = cwTransactionWatcher.createForDirs (cwTransactionWatcher.WatcherType.Staging) ([| stagingDir |]) ""
+    let srcWatcherList: FileSystemWatcher array = dtTransactionWatcher.createForDirs (dtTransactionWatcher.WatcherType.Source) (appConfig.scriptDirs |> List.toArray) appConfig.testWhiteLabel  
+    let stagingWatcherList: FileSystemWatcher array = dtTransactionWatcher.createForDirs (dtTransactionWatcher.WatcherType.Staging) ([| stagingDir |]) ""
     logger.Log cweedLogFile (MethodBase.GetCurrentMethod()) Severity.Info $"watchers created for source and staging directories"
 
     // init TransactionRunner

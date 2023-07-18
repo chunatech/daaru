@@ -1,8 +1,8 @@
-namespace cwTransactions
+namespace dtTransactions
 
 /// this module handles running individual transactions, updating the 
 /// register, and output streams of the transactions
-module cwTransactionRunner = 
+module dtTransactionRunner = 
     open System
     open System.IO
     open System.Timers
@@ -12,7 +12,7 @@ module cwTransactionRunner =
 
     open cweed.dtUtils
 
-    open cwTransactions
+    open dtTransactions
     open cweed.AppConfiguration
     open dtLogger.Logger
     open System.Reflection
@@ -56,7 +56,7 @@ module cwTransactionRunner =
     
 
         member this.checkTransactionQueue source (e: ElapsedEventArgs) =
-            let transactions: Transaction list = cwTransactionRegister.getAll ()
+            let transactions: Transaction list = dtTransactionRegister.getAll ()
             this.logger.Log this.logFile (MethodBase.GetCurrentMethod()) Severity.Debug $"transactions %s{transactions.ToString()}"
             let needToRun: Transaction list = transactions|> List.filter (fun (x: Transaction) -> x.LastRunTime.AddMinutes(x.Configuration.pollingInterval) <= DateTime.Now)
             
@@ -76,7 +76,7 @@ module cwTransactionRunner =
 
             this.logger.Log this.logFile (MethodBase.GetCurrentMethod()) Severity.Info $"%s{t.Configuration.scriptPath} process exited at %s{DateTime.Now.ToString()}"
 
-            let latest: option<Transaction> = cwTransactionRegister.get t.Configuration.scriptPath
+            let latest: option<Transaction> = dtTransactionRegister.get t.Configuration.scriptPath
 
             match latest with
             | Some (lt: Transaction) ->
@@ -114,7 +114,7 @@ module cwTransactionRunner =
                         log Severity.Debug $"setting ConsecutiveRunCount to %d{lt.ConsecutiveRunCount}"
 
                 log Severity.Debug $"running cwTransactionRegister update handle"
-                cwTransactionRegister.update lt
+                dtTransactionRegister.update lt
                 log Severity.Info $"%A{lt}"
 
                 // If appConfig contains ResultsProcessingScript definition
@@ -174,7 +174,7 @@ module cwTransactionRunner =
             
             if String.IsNullOrEmpty(e.Data) |> not then
                 log Severity.Debug $"e.Data is not empty or null. parsing e.Data for latest transaction"
-                let latest: option<Transaction> = cwTransactionRegister.get t.Configuration.scriptPath
+                let latest: option<Transaction> = dtTransactionRegister.get t.Configuration.scriptPath
                 
                 match latest with
                 | Some (lt: Transaction) ->
@@ -197,7 +197,7 @@ module cwTransactionRunner =
                         log Severity.Debug $"running cwTransactionRegsiter.update hook for %s{lt.Configuration.scriptPath}"
                         lt.LastRunDetails.UnhandledOutput <- 0
                         lt.LastRunDetails.UnhandledErrors <- 0
-                        cwTransactionRegister.update lt
+                        dtTransactionRegister.update lt
 
                     // STARTED:
                     | (text: string) when text.EndsWith("started successfully.") ->
@@ -205,7 +205,7 @@ module cwTransactionRunner =
                         log Severity.Debug $"browser started for %s{lt.Configuration.scriptPath} at %s{lt.LastRunDetails.BrowserStarted.ToString()}"
 
                         log Severity.Debug $"running cwTransactionRegsiter.update hook for %s{lt.Configuration.scriptPath}"
-                        cwTransactionRegister.update lt
+                        dtTransactionRegister.update lt
 
                     // PASSED:
                     | (text: string) when text.EndsWith(" passed") ->
@@ -217,7 +217,7 @@ module cwTransactionRunner =
                             log Severity.Debug $"setting passed value for %s{lt.Configuration.scriptPath} to %d{lt.LastRunDetails.Passed}"
 
                             log Severity.Debug $"running cwTransactionRegsiter.update hook for %s{lt.Configuration.scriptPath}"
-                            cwTransactionRegister.update lt
+                            dtTransactionRegister.update lt
 
                     // FAILED:
                     | (text: string) when text.EndsWith(" failed") ->
@@ -229,7 +229,7 @@ module cwTransactionRunner =
                             log Severity.Debug $"setting failure value for %s{lt.Configuration.scriptPath} to %d{lt.LastRunDetails.Failed}"
 
                             log Severity.Debug $"running cwTransactionRegsiter.update hook for %s{lt.Configuration.scriptPath}"
-                            cwTransactionRegister.update lt
+                            dtTransactionRegister.update lt
 
                     // SKIPPED:
                     | (text: string) when text.EndsWith(" skipped") ->
@@ -241,7 +241,7 @@ module cwTransactionRunner =
                             log Severity.Debug $"setting skipped value for %s{lt.Configuration.scriptPath} to %d{lt.LastRunDetails.Skipped}"
 
                             log Severity.Debug $"running cwTransactionRegsiter.update hook for %s{lt.Configuration.scriptPath}"
-                            cwTransactionRegister.update lt
+                            dtTransactionRegister.update lt
 
                     // RESULTS:
                     | (text: string) when text.StartsWith("[[RESULT_HEADER]]") ->
@@ -282,7 +282,7 @@ module cwTransactionRunner =
                     // Change this to a log:
                     | _ ->
                         lt.LastRunDetails.UnhandledOutput <- lt.LastRunDetails.UnhandledOutput + 1
-                        cwTransactionRegister.update lt
+                        dtTransactionRegister.update lt
                         log Severity.Debug $"Unhandled output - Stream: STDOUT, Output: %s{e.Data}"
                         if this.logger.SeverityThreshold = Severity.Debug then
                             lt.WriteOutUnhandled STDOUT e.Data
@@ -300,7 +300,7 @@ module cwTransactionRunner =
 
             // TODO: Build out logic here for error/failure parsing and handling
             if String.IsNullOrEmpty(e.Data) |> not then
-                let latest: option<Transaction> = cwTransactionRegister.get t.Configuration.scriptPath
+                let latest: option<Transaction> = dtTransactionRegister.get t.Configuration.scriptPath
                 match latest with
                 | Some (lt: Transaction) ->
                     match e.Data with
@@ -311,12 +311,12 @@ module cwTransactionRunner =
                         lt.LastRunDetails.DriverVersionMismatch <- (true, ver)
                         log Severity.Warn $"chrome driver mismatch detected: %s{ver} is mismatch"
 
-                        cwTransactionRegister.update lt
+                        dtTransactionRegister.update lt
                     // | (text: string) when text.EndsWith("subscribing a listener to the already connected DevToolsClient. Connection notification will not arrive.") ->
                     //     ignore text
                     | _ ->
                         lt.LastRunDetails.UnhandledErrors <- lt.LastRunDetails.UnhandledErrors + 1
-                        cwTransactionRegister.update lt
+                        dtTransactionRegister.update lt
                         log Severity.Error $"%s{e.Data}"
                         if this.logger.SeverityThreshold = Severity.Debug then
                             lt.WriteOutUnhandled STDERR e.Data
@@ -342,7 +342,7 @@ module cwTransactionRunner =
 
                     log Severity.Info $"%s{t.Configuration.scriptPath} last ran at: %s{t.LastRunTime.ToString()}"
                     t.LastRunTime <- DateTime.Now
-                    cwTransactionRegister.update t
+                    dtTransactionRegister.update t
                     log Severity.Info $"%s{t.Configuration.scriptPath} starting at: %s{t.LastRunTime.ToString()}"
 
                     log Severity.Debug $"setting up process info"

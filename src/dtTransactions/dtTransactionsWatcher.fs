@@ -1,13 +1,13 @@
-namespace cwTransactions
+namespace dtTransactions
 
 /// handles a file system watcher designed to watch transaction files for changes
 /// and handle adding or removing them to the transaction register
-module cwTransactionWatcher = 
+module dtTransactionWatcher = 
     open System
     open System.IO
     open System.Reflection
     open System.Security.Cryptography
-    open cwTransactions
+    open dtTransactions
 
 
     type WatcherType =
@@ -45,9 +45,9 @@ module cwTransactionWatcher =
     let remove (path: string) =
         let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
         let mutable msg: string = ""
-        match (cwTransactionRegister.get path) with
+        match (dtTransactionRegister.get path) with
         | Some (t: Transaction) ->
-            cwTransactionRegister.remove t.Configuration.scriptPath
+            dtTransactionRegister.remove t.Configuration.scriptPath
             msg <- "staged transaction removed " + t.Configuration.stagedScriptPath
             File.Delete t.Configuration.stagedScriptPath
         | None ->
@@ -63,9 +63,9 @@ module cwTransactionWatcher =
         let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
         let mutable msg: string = ""
 
-        match TransactionBuilder.buildTransaction path with
+        match dtTransactionBuilder.buildTransaction path with
         | Some (tc: TransactionConfiguration) ->
-            cwTransactionRegister.add tc
+            dtTransactionRegister.add tc
             msg <- $"added %s{path}"
         | None -> 
             msg <- $"unable to add %s{path}"
@@ -82,7 +82,7 @@ module cwTransactionWatcher =
         let this: System.Reflection.MethodBase = System.Reflection.MethodBase.GetCurrentMethod()
         let mutable msg: string = ""
 
-        match (cwTransactionRegister.get path) with
+        match (dtTransactionRegister.get path) with
         | Some (t: Transaction) ->
             let sourceBytes: byte array = File.ReadAllBytes(path)
             let sourceHash: string = Convert.ToHexString(SHA1.Create().ComputeHash(sourceBytes))

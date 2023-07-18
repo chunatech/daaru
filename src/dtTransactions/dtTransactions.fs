@@ -1,6 +1,6 @@
-﻿namespace cwTransactions
+﻿namespace dtTransactions
 
-module cwTransactions =
+module dtTransactions =
     open System
     open System.IO
 

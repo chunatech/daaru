@@ -19,11 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="cwTransactions.fs" />
-    <Compile Include="cwTransactionsBuilder.fs" />
-    <Compile Include="cwTransactionsRegister.fs" />
-    <Compile Include="cwTransactionsRunner.fs" />
-    <Compile Include="cwTransactionsWatcher.fs" />
+    <Compile Include="dtTransactions.fs" />
+    <Compile Include="dtTransactionsBuilder.fs" />
+    <Compile Include="dtTransactionsRegister.fs" />
+    <Compile Include="dtTransactionsRunner.fs" />
+    <Compile Include="dtTransactionsWatcher.fs" />
   </ItemGroup>
 
 </Project>

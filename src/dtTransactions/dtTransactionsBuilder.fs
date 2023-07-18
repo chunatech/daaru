@@ -1,12 +1,12 @@
-namespace cwTransactions
+namespace dtTransactions
 
-/// handles the templating, building, and creation of fsx files from cwt and 
+/// handles the templating, building, and creation of fsx files from dt and 
 /// eventually custom extensions
-module TransactionBuilder = 
+module dtTransactionBuilder = 
     open System
     open System.IO
     open cweed.AppConfiguration
-    open cwTransactions
+    open dtTransactions
 
     // instance of the app configuration being used. initialized with the 
     // default. init fn provides the user config at runtime
@@ -142,8 +142,8 @@ module TransactionBuilder =
                 _buildFromTemplate tConfig lines result @ opts
 
             | (line: string) when line.Contains("__TRANSACTION_TESTS__") -> 
-                let cwt: string list = File.ReadAllLines(tConfig.scriptPath) |> Array.toList
-                _buildFromTemplate tConfig lines result @ cwt
+                let dt: string list = File.ReadAllLines(tConfig.scriptPath) |> Array.toList
+                _buildFromTemplate tConfig lines result @ dt
 
             // TODO: 
             // ADD TRANSACTION CONFIG 
@@ -166,7 +166,7 @@ module TransactionBuilder =
         result
             
 
-    let private _processCwtFromTemplate (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
+    let private _processdtFromTemplate (tConfig: TransactionConfiguration) : option<TransactionConfiguration> = 
         let sourcePath: string = FileInfo(tConfig.scriptPath).FullName
         let nameWithoutExt: string = Path.GetFileNameWithoutExtension(sourcePath)
         
@@ -284,5 +284,5 @@ module TransactionBuilder =
         match Path.GetExtension(tConfig.scriptPath) with 
         | ".fsx" -> _processFsx tConfig 
         | (ext: string) when ext.EndsWith(_config.testWhiteLabel) ->
-            _processCwtFromTemplate tConfig
+            _processdtFromTemplate tConfig
         | _ -> None
