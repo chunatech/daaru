@@ -3,7 +3,7 @@
 
 ## Example 
 
-this is an example of a transaction file using the default `.cwt` extension. 
+this is an example of a transaction file using the default `.dt` extension. 
 these are just the canopy tests without the boilerplate parts. 
 
 cweed composes these files with a template, watches them for changes, and runs 
@@ -15,7 +15,7 @@ to write canopy tests.
 ```fsharp 
 useCase "cweed" "Test cweed transactions" 0
 
-cwt "testOne" 0 (fun _ -> 
+dt "testOne" 0 (fun _ -> 
     goto "http://lefthandedgoat.github.io/canopy/testpages/"
     printfn "[[LOG]][INFO] User generated log test."
 
@@ -78,7 +78,7 @@ let __WHITE_LABEL__ (name: string) (maxDurationMs: int64) (testFn: unit -> unit)
 ```
 
 this is the function that sets ups the test. the `__WHITE_LABEL__` template string
-is replaced with either cwt by default or a moniker of your choice. To use a 
+is replaced with either dt by default or a moniker of your choice. To use a 
 custom template name and extension configure the `testWhiteLabel` setting in `config.json`. whatever moniker is chosen is also the extension the program will 
 look for when running tests.
 
