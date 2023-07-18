@@ -66,7 +66,7 @@ canopyConfig | Optional | additional canopy configurations
 "scriptDirectories": [string]
 ```
 
-This option configures what directoried cWeed will watch and pull transaction files from. The files contain `.cwt` 
+This option configures what directoried cWeed will watch and pull transaction files from. The files contain `.dt` 
 extensions represent the tests to be run. They are written in FSharp and composed into full `.fsx` files to be run 
 by cWeed. The composed files will go into the `staging` directory of the application, and the directory structure will  
 mirror the script directory provided. 
