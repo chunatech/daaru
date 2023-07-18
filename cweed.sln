@@ -15,7 +15,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cweed.Transactions", "src\c
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "fsi_standalone", "src\fsi_standalone\fsi_standalone.fsproj", "{9057DB75-15C2-4E2F-A919-C9FFA175C00E}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "cwLogger", "src\cwLogger\cwLogger.fsproj", "{FB8FB248-0B12-4EA5-8752-D97FADEC99D9}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "dtLogger", "src\dtLogger\dtLogger.fsproj", "{FB8FB248-0B12-4EA5-8752-D97FADEC99D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -15,7 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\cweed.Configuration\cweed.Configuration.fsproj" />
     <ProjectReference Include="..\cweed.Utils\cweed.Utils.fsproj" />
-    <ProjectReference Include="..\cwLogger\cwLogger.fsproj" />
+    <ProjectReference Include="..\dtLogger\dtLogger.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
