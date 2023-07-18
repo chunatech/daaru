@@ -21,7 +21,7 @@ Daaru is built using:
  ### Installation
 
 <!-- TODO: Link to latest release here -->
-1. Obtain a [release]() for your operating system
+1. Obtain a [release](https://github.com/chunatech/daaru/releases/latest) for your operating system
 2. Extract the release into the directory where you would like Daaru to be 
 installed
 <!-- TODO: Link to Configuration page -->
